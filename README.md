@@ -8,12 +8,10 @@ My personal Homebrew tap
 - [`rime-ls`](https://github.com/twio142/rime-ls)
 - [`go-pinyin`](https://github.com/twio142/go-pinyin)
 - [`ttyd`](https://github.com/twio142/ttyd)
-- [`battery`](https://github.com/twio142/battery)
 
 ## Casks
 
 - [Hummingbird](https://github.com/twio142/Hummingbird)
-- Battery (app)
 
 ## To-Do
 
