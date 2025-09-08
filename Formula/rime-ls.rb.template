@@ -1,22 +1,22 @@
 class RimeLs < Formula
   desc "Language server for text input with rime"
   homepage "https://github.com/twio142/rime-ls"
-  version "..."
+  version "%%VERSION%%"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-aarch64-apple-darwin"
-      sha256 "..."
+      sha256 "%%SHA_ARM64_MACOS%%"
     else
       url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-x86_64-apple-darwin"
-      sha256 "..."
+      sha256 "%%SHA_X86_64_MACOS%%"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
       url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-x86_64-unknown-linux-gnu"
-      sha256 "..."
+      sha256 "%%SHA_X86_64_LINUX%%"
     end
   end
 
