@@ -1,23 +1,23 @@
 class Ttyd < Formula
   desc "Command-line tool for sharing terminal over the web"
   homepage "https://github.com/twio142/"
-  version "..."
+  version "%%VERSION%%"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/twio142/ttyd/releases/download/v#{version}/ttyd-arm64-macos"
-      sha256 "..."
+      sha256 "%%SHA_ARM64_MACOS%%"
     else
       url "https://github.com/twio142/ttyd/releases/download/v#{version}/ttyd-x86_64-macos"
-      sha256 "..."
+      sha256 "%%SHA_X86_64_MACOS%%"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
       url "https://github.com/twio142/ttyd/releases/download/v#{version}/ttyd-x86_64-linux"
-      sha256 "..."
+      sha256 "%%SHA_X86_64_LINUX%%"
     end
   end
 
