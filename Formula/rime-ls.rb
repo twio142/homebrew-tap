@@ -5,17 +5,17 @@ class RimeLs < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-aarch64-apple-darwin"
+      url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-aarch64-apple-darwin.tar.gz"
       sha256 "..."
     else
-      url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-x86_64-apple-darwin"
+      url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-x86_64-apple-darwin.tar.gz"
       sha256 "..."
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-x86_64-unknown-linux-gnu"
+      url "https://github.com/twio142/rime-ls/releases/download/v#{version}/rime_ls-x86_64-unknown-linux-gnu.tar.gz"
       sha256 "..."
     end
   end
