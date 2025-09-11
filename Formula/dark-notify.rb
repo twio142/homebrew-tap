@@ -1,17 +1,12 @@
 class DarkNotify < Formula
   desc "Watcher for macOS 10.14+ light/dark mode changes"
   homepage "https://github.com/twio142/dark-notify"
-  version "..."
+  url "https://github.com/twio142/dark-notify/releases/download/v1.0.1-mod/dark-notify-arm64.tar.gz"
+  version "1.0.1-mod"
+  sha256 "..."
 
-  on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/twio142/dark-notify/releases/download/v#{version}/dark-notify-arm64.tar.gz"
-      sha256 "..."
-    else
-      url "https://github.com/twio142/dark-notify/releases/download/v#{version}/dark-notify-x86_64.tar.gz"
-      sha256 "..."
-    end
-  end
+  depends_on arch: :arm64
+  depends_on :macos
 
   def install
     bin.install Dir["dark-notify*"].first => "dark-notify"
