@@ -1,0 +1,77 @@
+name: Update ProperTree Formula
+
+on:
+  schedule:
+    # Runs weekly on Sunday at midnight UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-for-update:
+    runs-on: macos-latest
+    outputs:
+      latest_commit: ${{ steps.get_latest_commit.outputs.commit }}
+      new_version: ${{ steps.get_latest_commit.outputs.version }}
+
+    steps:
+      - name: Get current commit
+        id: get_current_commit
+        run: |
+          set -euo pipefail
+          brew tap "${{ github.repository }}"
+          commit=$(brew info --json=v2 propertree | jq -r '.formulae[0].urls.stable.url' | grep -oE '[0-9a-f]{40}')
+          echo "commit=$commit" >> $GITHUB_OUTPUT
+
+      - name: Get latest commit hash from upstream
+        id: get_latest_commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          branch=$(gh api repos/corpnewt/ProperTree --jq .default_branch)
+          commit=$(gh api repos/corpnewt/ProperTree/commits/$branch --jq .sha)
+
+          if [ "${{ steps.get_current_commit.outputs.commit }}" != "${commit}" ]; then
+            echo "commit=${commit}" >> $GITHUB_OUTPUT
+            date=$(gh api repos/corpnewt/ProperTree/commits/${commit} --jq .commit.author.date)
+            version=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$date" "+%Y.%m.%d")
+            echo "version=$version" >> $GITHUB_OUTPUT
+          else
+            echo "commit=" >> $GITHUB_OUTPUT
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+
+  update-formula:
+    needs: check-for-update
+    if: needs.check-for-update.outputs.new_version != ''
+    runs-on: macos-latest
+    steps:
+      - name: Get latest version info
+        id: get_latest
+        run: |
+          set -euo pipefail
+
+          latest_commit="${{ needs.check-for-update.outputs.latest_commit }}"
+          url="https://github.com/corpnewt/ProperTree/archive/${latest_commit}.zip"
+          echo "url=$url" >> $GITHUB_OUTPUT
+
+          sha256=$(curl -L "$url" | shasum -a 256 | awk '{print $1}')
+          echo "sha256=$sha256" >> $GITHUB_OUTPUT
+
+      - name: Update Homebrew formula
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ needs.check-for-update.outputs.new_version }}"
+
+          brew tap "${{ github.repository }}"
+          brew bump-formula-pr \
+            --url "${{ steps.get_latest.outputs.url }}" \
+            --sha256 "${{ steps.get_latest.outputs.sha256 }}" \
+            --version "${version}" \
+            ${{ github.repository }}/propertree
