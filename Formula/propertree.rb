@@ -1,12 +1,22 @@
 class Propertree < Formula
   desc "Cross-platform GUI plist editor written in python"
   homepage "https://github.com/corpnewt/ProperTree"
-  url "https://github.com/corpnewt/ProperTree/archive/417837adc32a9e0ffa4895074889ebf4f52e6c80.zip"
+  url "https://github.com/corpnewt/ProperTree/archive/417837adc32a9e0ffa4895074889ebf4f52e6c80.tar.gz"
   version "2025.08.31"
-  sha256 "8913d3ef352bc5bbb5f936fffa4e133a170bb580d23bc2310dafeb7e2d3115e3"
+  sha256 "958f9320b3db36987dd323db7731549cfec0e35d4bf3e5b8a2ca2e9b3c458a38"
 
-  depends_on "python@3.13"
+  livecheck do
+    url "https://api.github.com/repos/corpnewt/ProperTree/commits"
+    strategy :page_match do |page|
+      require "json"
+      data = JSON.parse(page)
+      Date.parse(data.first["commit"]["committer"]["date"]).strftime("%Y.%m.%d")
+    end
+    regex(/\d{4}\.\d{2}\.\d{2}/i)
+  end
+
   depends_on "python-tk@3.13"
+  depends_on "python@3.13"
 
   def install
     libexec.install Dir["*"]
