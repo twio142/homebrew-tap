@@ -23,4 +23,8 @@ class RimeLs < Formula
   def install
     bin.install Dir["rime_ls*"].first => "rime_ls"
   end
+
+  test do
+    system bin/"rime_ls", "--help"
+  end
 end
