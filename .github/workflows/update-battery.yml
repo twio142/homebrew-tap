@@ -1,0 +1,42 @@
+name: Update battery
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-formula-pr:
+    runs-on: macos-latest
+    steps:
+      - name: Get current formula version
+        id: current_version
+        run: |
+          brew tap "${{ github.repository }}"
+          version=$(brew info --json=v2 "${{ github.repository }}/battery" | jq -r '.formulae[0].version')
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Get latest release version from upstream
+        id: latest_version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          latest_tag=$(gh api repos/actuallymentor/battery/releases/latest --jq .tag_name)
+          latest_version=${latest_tag#v}
+          echo "version=${latest_version}" >> $GITHUB_OUTPUT
+
+      - name: Create Formula Update PR
+        if: steps.latest_version.outputs.version != steps.current_version.outputs.version
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          brew bump-formula-pr \
+            --no-audit \
+            --no-fork \
+            --version="${{ steps.latest_version.outputs.version }}" \
+            "${{ github.repository }}/battery"
