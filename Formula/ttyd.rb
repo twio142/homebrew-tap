@@ -4,6 +4,9 @@ class Ttyd < Formula
   version "1.7.7-mod"
   license "MIT"
 
+  depends_on "json-c"
+  depends_on "libwebsockets"
+
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/twio142/ttyd/releases/download/v#{version}/ttyd-arm64-macos.tar.gz"
