@@ -1,4 +1,4 @@
-name: Update ProperTree Formula
+name: Update propertree
 
 on:
   schedule:
@@ -11,67 +11,47 @@ permissions:
   pull-requests: write
 
 jobs:
-  check-for-update:
+  update-formula-pr:
     runs-on: macos-latest
-    outputs:
-      latest_commit: ${{ steps.get_latest_commit.outputs.commit }}
-      new_version: ${{ steps.get_latest_commit.outputs.version }}
-
     steps:
-      - name: Get current commit
-        id: get_current_commit
+      - name: Check for updates using brew livecheck
+        id: livecheck
         run: |
           set -euo pipefail
           brew tap "${{ github.repository }}"
-          commit=$(brew info --json=v2 propertree | jq -r '.formulae[0].urls.stable.url' | grep -oE '[0-9a-f]{40}')
-          echo "commit=$commit" >> $GITHUB_OUTPUT
+          livecheck_output=$(brew livecheck --json propertree 2>/dev/null || echo '[]')
+          outdated=$(echo "$livecheck_output" | jq -r '.[0].version.outdated // false')
+          if [ "$outdated" = "true" ]; then
+            latest_version=$(echo "$livecheck_output" | jq -r '.[0].version.latest')
+            echo "version=$latest_version" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Get latest commit hash from upstream
-        id: get_latest_commit
+      - name: Get latest commit hash
+        id: get_commit
+        if: steps.livecheck.outputs.version != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          branch=$(gh api repos/corpnewt/ProperTree --jq .default_branch)
-          commit=$(gh api repos/corpnewt/ProperTree/commits/$branch --jq .sha)
-
-          if [ "${{ steps.get_current_commit.outputs.commit }}" != "${commit}" ]; then
-            echo "commit=${commit}" >> $GITHUB_OUTPUT
-            date=$(gh api repos/corpnewt/ProperTree/commits/${commit} --jq .commit.author.date)
-            version=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$date" "+%Y.%m.%d")
-            echo "version=$version" >> $GITHUB_OUTPUT
-          else
-            echo "commit=" >> $GITHUB_OUTPUT
-            echo "version=" >> $GITHUB_OUTPUT
-          fi
-
-  update-formula:
-    needs: check-for-update
-    if: needs.check-for-update.outputs.new_version != ''
-    runs-on: macos-latest
-    steps:
-      - name: Get latest version info
-        id: get_latest
-        run: |
-          set -euo pipefail
-
-          latest_commit="${{ needs.check-for-update.outputs.latest_commit }}"
-          url="https://github.com/corpnewt/ProperTree/archive/${latest_commit}.zip"
-          echo "url=$url" >> $GITHUB_OUTPUT
-
-          sha256=$(curl -L "$url" | shasum -a 256 | awk '{print $1}')
-          echo "sha256=$sha256" >> $GITHUB_OUTPUT
+          latest_commit=$(gh api repos/corpnewt/ProperTree/commits --jq '.[0].sha')
+          echo "commit=$latest_commit" >> $GITHUB_OUTPUT
 
       - name: Update Homebrew formula
+        if: steps.livecheck.outputs.version != ''
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          version="${{ needs.check-for-update.outputs.new_version }}"
 
-          brew tap "${{ github.repository }}"
+          version="${{ steps.livecheck.outputs.version }}"
+          latest_commit="${{ steps.get_commit.outputs.commit }}"
+          url="https://github.com/corpnewt/ProperTree/archive/${latest_commit}.zip"
+
           brew bump-formula-pr \
-            --url "${{ steps.get_latest.outputs.url }}" \
-            --sha256 "${{ steps.get_latest.outputs.sha256 }}" \
-            --version "${version}" \
+            --no-audit \
+            --no-fork \
+            --url "$url" \
+            --version "$version" \
             ${{ github.repository }}/propertree
