@@ -1,0 +1,77 @@
+diff --git a/html/src/components/app.tsx b/html/src/components/app.tsx
+index 52cf411..771ea75 100644
+--- a/html/src/components/app.tsx
++++ b/html/src/components/app.tsx
+@@ -21,11 +21,11 @@ const clientOptions = {
+     unicodeVersion: '11',
+ } as ClientOptions;
+ const termOptions = {
+-    fontSize: 13,
+-    fontFamily: 'Consolas,Liberation Mono,Menlo,Courier,monospace',
++    fontSize: 12,
++    fontFamily: 'JetBrainsMono NF,Consolas,Liberation Mono,Menlo,Courier,monospace',
+     theme: {
+         foreground: '#d2d2d2',
+-        background: '#2b2b2b',
++        background: 'transparent',
+         cursor: '#adadad',
+         black: '#000000',
+         red: '#d81e00',
+diff --git a/html/src/style/index.scss b/html/src/style/index.scss
+index 0f9244b..e5196bc 100644
+--- a/html/src/style/index.scss
++++ b/html/src/style/index.scss
+@@ -6,6 +6,38 @@ body {
+   overflow: hidden;
+ }
+ 
++@font-face {
++  font-family: 'JetBrainsMono NF';
++  font-style: normal;
++  font-weight: normal;
++  font-display: swap;
++  src: url(../JetBrainsMonoNF-Regular.woff2) format('woff2');
++}
++
++@font-face {
++  font-family: 'JetBrainsMono NF';
++  font-style: normal;
++  font-weight: bold;
++  font-display: swap;
++  src: url(../JetBrainsMonoNF-Bold.woff2) format('woff2');
++}
++
++@font-face {
++  font-family: 'JetBrainsMono NF';
++  font-style: italic;
++  font-weight: normal;
++  font-display: swap;
++  src: url(../JetBrainsMonoNF-Italic.woff2) format('woff2');
++}
++
++@font-face {
++  font-family: 'JetBrainsMono NF';
++  font-style: italic;
++  font-weight: bold;
++  font-display: swap;
++  src: url(../JetBrainsMonoNF-BoldItalic.woff2) format('woff2');
++}
++
+ #terminal-container {
+   width: auto;
+   height: 100%;
+diff --git a/html/webpack.config.js b/html/webpack.config.js
+index 18bfcf3..94e0b33 100644
+--- a/html/webpack.config.js
++++ b/html/webpack.config.js
+@@ -29,6 +29,10 @@ const baseConfig = {
+                 test: /\.s?[ac]ss$/,
+                 use: [devMode ? 'style-loader' : MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
+             },
++            {
++                test: /\.(ttf|otf|eot|woff|woff2)$/,
++                type: 'asset/inline',
++            },
+         ],
+     },
+     resolve: {
