@@ -5,37 +5,101 @@ on:
     - cron: "0 0 * * 0"
   workflow_dispatch:
 
+env:
+  FORMULA: dark-notify
+  UPSTREAM: cormacrelf/dark-notify
+
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  update-formula-pr:
+  check:
     runs-on: macos-latest
+    outputs:
+      version: ${{ steps.livecheck.outputs.version }}
+      url: ${{ steps.livecheck.outputs.url }}
+      sha256: ${{ steps.livecheck.outputs.sha256 }}
     steps:
-      - name: Check for updates using brew livecheck
-        id: livecheck
+      - id: livecheck
+        env:
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           brew tap "${{ github.repository }}"
-          livecheck_output=$(brew livecheck --json dark-notify 2>/dev/null || echo '[]')
-          outdated=$(echo "$livecheck_output" | jq -r '.[0].version.outdated // false')
-          if [ "$outdated" = "true" ]; then
-            latest_version=$(echo "$livecheck_output" | jq -r '.[0].version.latest')
-            echo "version=$latest_version" >> $GITHUB_OUTPUT
+          brew livecheck --json dark-notify  > livecheck.json
+          PROCEED=$(jq -r '.[0].version.outdated // false' livecheck.json)
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            PROCEED="true"
+          fi
+
+          if [ "$PROCEED" = "true" ]; then
+            VERSION=$(jq -r '.[0].version.latest' livecheck.json)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            BASE_URL="https://github.com/$UPSTREAM/archive/refs/tags"
+            TAG=$(gh release list --repo $UPSTREAM --json tagName --jq '.[0].tagName')
+            NEW_URL="$BASE_URL/$TAG.tar.gz"
+            echo "url=$NEW_URL" >> $GITHUB_OUTPUT
+
+            SHA256=$(curl -L $NEW_URL | shasum -a 256 | awk '{print $1}')
+            echo "sha256=$SHA256" >> $GITHUB_OUTPUT
           else
             echo "version=" >> $GITHUB_OUTPUT
           fi
 
-      - name: Bump formula PR
-        if: steps.livecheck.outputs.version != ''
+  build-and-release:
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Build bottle and update formula
         env:
+          NEW_URL: ${{ needs.check.outputs.url }}
+          NEW_SHA: ${{ needs.check.outputs.sha256 }}
+          VERSION: ${{ needs.check.outputs.version }}
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          brew bump-formula-pr \
-            --no-audit \
-            --no-fork \
-            --version="${{ steps.livecheck.outputs.version }}" \
-            "dark-notify"
 
+          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
+          sed -i.bak "s/sha256 \".*\"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
+
+          RELEASE_TAG="$FORMULA-v$VERSION"
+          ROOT_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG"
+
+          if ! gh release view "$RELEASE_TAG" &>/dev/null; then
+            gh release create "$RELEASE_TAG" --title "$FORMULA v$VERSION"
+          fi
+
+          brew install --build-bottle "${{ github.repository }}/$FORMULA"
+          brew bottle --json --root-url="$ROOT_URL" "$FORMULA"
+
+          BOTTLE_FILE=$(ls *.bottle*.tar.gz)
+          JSON_FILE=$(ls *.bottle.json)
+          FILENAME=$(jq -r '.[].bottle.tags.[].filename' "$JSON_FILE")
+          mv "$BOTTLE_FILE" "$FILENAME"
+          gh release upload "$RELEASE_TAG" "$FILENAME" --clobber
+
+          brew bottle --merge --write --no-commit $JSON_FILE --root-url="$ROOT_URL"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "${{ env.FORMULA }} ${{ needs.check.outputs.version }}"
+          title: "Bump ${{ env.FORMULA }} to v${{ needs.check.outputs.version }}"
+          body: "Automated update for ${{ env.FORMULA }} version v${{ needs.check.outputs.version }}"
+          base: main
+          branch: "update/${{ env.FORMULA }}-v${{ needs.check.outputs.version }}"
+          delete-branch: true
+          add-paths: "Formula/${{ env.FORMULA }}.rb"
