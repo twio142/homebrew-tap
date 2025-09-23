@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+env:
+  FORMULA: rime-ls
+  UPSTREAM: wlh320/rime-ls
+
 permissions:
   contents: write
 
@@ -26,7 +30,7 @@ jobs:
           set -euo pipefail
           brew tap $REPO
 
-          brew livecheck $REPO/rime-ls --json > livecheck.json
+          brew livecheck $REPO/$FORMULA --json > livecheck.json
           PROCEED=$(jq -r '.[0].version.outdated' livecheck.json)
 
           if [ "$EVENT" = "workflow_dispatch" ]; then
@@ -37,18 +41,17 @@ jobs:
             VERSION=$(jq -r '.[0].version.latest' livecheck.json)
             echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-            BASE_URL="https://github.com/wlh320/rime-ls/archive/refs/tags"
+            BASE_URL="https://github.com/$UPSTREAM/archive/refs/tags"
             NEW_URL="$BASE_URL/v$VERSION.tar.gz"
             echo "url=$NEW_URL" >> $GITHUB_OUTPUT
 
-            sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/rime-ls.rb
-            SHA256=$(brew fetch rime-ls 2>&1 | grep "SHA-256:" | awk '{print $2}')
+            SHA256=$(curl -L $NEW_URL | shasum -a 256 | awk '{print $1}')
             echo "sha256=$SHA256" >> $GITHUB_OUTPUT
           else
             echo "version=" >> $GITHUB_OUTPUT
           fi
 
-  build:
+  build-and-release:
     needs: check
     if: needs.check.outputs.version != ''
     strategy:
@@ -58,90 +61,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Homebrew/actions/setup-homebrew@main
-        with:
-          cache: true
 
-      - name: Update formula for build
+      - name: Build bottle and release
         env:
           NEW_URL: ${{ needs.check.outputs.url }}
           NEW_SHA: ${{ needs.check.outputs.sha256 }}
-        run: |
-          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/rime-ls.rb
-          sed -i.bak "s/sha256 \".*\"/sha256 \"$NEW_SHA\"/" Formula/rime-ls.rb
-
-      - name: Build bottle
-        env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          brew install --build-bottle rime-ls
-          brew bottle --json rime-ls
-
-      - name: Upload bottle and JSON
-        uses: actions/upload-artifact@v4
-        with:
-          name: bottles-${{ matrix.os }}
-          path: |
-            *.bottle*.tar.gz
-            *.bottle.json
-          if-no-files-found: error
-
-  release:
-    needs: [check, build]
-    if: needs.check.outputs.version != ''
-    runs-on: macos-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all bottle artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: bottles
-          pattern: bottles-*
-          merge-multiple: true
-
-      - name: Create GitHub Release
-        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.check.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          if ! gh release view "rime-ls-v$VERSION" &>/dev/null; then
-            gh release create "rime-ls-v$VERSION" --title "rime-ls v$VERSION" bottles/*.bottle*.tar.gz
+          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
+          sed -i.bak "s/sha256 \".*\"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
+
+          brew install --build-bottle "$REPO/$FORMULA"
+          brew bottle --json "$FORMULA"
+
+          if gh release view "$FORMULA-v$VERSION" &>/dev/null; then
+            BOTTLE_FILE=$(ls *.bottle*.tar.gz)
+            ASSET_EXISTS=$(gh release view "$FORMULA-v$VERSION" --json assets -q "first(.assets[] | .name == \"$BOTTLE_FILE\") != null")
+            if [ "$ASSET_EXISTS" = "true" ]; then
+              gh release delete-asset "$FORMULA-v$VERSION" "$BOTTLE_FILE" -y
+            fi
+            gh release upload "$FORMULA-v$VERSION" "$BOTTLE_FILE"
+          else
+            gh release create "$FORMULA-v$VERSION" --title "$FORMULA v$VERSION" *.bottle*.tar.gz
           fi
 
-      - name: Update formula file
-        env:
-          VERSION: ${{ needs.check.outputs.version }}
-          NEW_URL: ${{ needs.check.outputs.url }}
-          NEW_SHA: ${{ needs.check.outputs.sha256 }}
-          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/rime-ls.rb
-          sed -i.bak "s/sha256 \".*\"/sha256 \"$NEW_SHA\"/" Formula/rime-ls.rb
-
-          TAP_DIR="$(brew --prefix)/Library/Taps/${{ github.repository_owner }}/homebrew-tap"
-          mkdir -p "$TAP_DIR/Formula"
-          mv "${{ github.workspace }}/Formula/rime-ls.rb" "$TAP_DIR/Formula/rime-ls.rb"
-
-          brew bottle --merge --write --no-commit bottles/*.bottle.json --root-url="https://github.com/${{ github.repository }}/releases/download/rime-ls-v$VERSION"
-
-          cp "$TAP_DIR/Formula/rime-ls.rb" Formula/rime-ls.rb
+          brew bottle --merge --write --no-commit *.bottle.json --root-url="https://github.com/$REPO/releases/download/$FORMULA-v$VERSION"
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "rime-ls ${{ needs.check.outputs.version }}"
-          title: "Bump rime-ls to v${{ needs.check.outputs.version }}"
-          body: "Automated update for rime-ls version v${{ needs.check.outputs.version }}"
+          commit-message: "$FORMULA ${{ needs.check.outputs.version }}"
+          title: "Bump $FORMULA to v${{ needs.check.outputs.version }}"
+          body: "Automated update for $FORMULA version v${{ needs.check.outputs.version }}"
           base: main
-          branch: "update/rime-ls-v${{ needs.check.outputs.version }}"
+          branch: "update/$FORMULA-v${{ needs.check.outputs.version }}"
           delete-branch: true
-          add-paths: "Formula/rime-ls.rb"
+          add-paths: "Formula/$FORMULA.rb"
