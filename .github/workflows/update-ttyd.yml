@@ -82,14 +82,13 @@ jobs:
           sed -i.bak "s/sha256 ".*"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
 
           brew install --build-bottle "${{ github.repository }}/$FORMULA"
-          brew bottle --json "$FORMULA"
+          brew bottle --json --root-url="https://github.com/${{ github.repository }}/releases/download/$FORMULA-v$VERSION" "$FORMULA"
 
           BOTTLE_FILE=$(ls *.bottle*.tar.gz)
-          RELEASE_TAG="$FORMULA-v$VERSION"
-
-          if [ "$(gh release view "$RELEASE_TAG" --json assets -q ".assets[] | .name == \"$BOTTLE_FILE\"")" = "false" ]; then
-            gh release upload "$RELEASE_TAG" "$BOTTLE_FILE"
-          fi
+          JSON_FILE=$(ls *.bottle.json)
+          FILENAME=$(jq -r '.[].bottle.tags.[].filename' "$JSON_FILE")
+          mv "$BOTTLE_FILE" "$FILENAME"
+          gh release upload "$FORMULA-v$VERSION" "$FILENAME" --clobber
 
       - name: Upload bottle and JSON
         uses: actions/upload-artifact@v4
