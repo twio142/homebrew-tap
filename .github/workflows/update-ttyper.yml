@@ -1,0 +1,97 @@
+name: Update ttyper
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+env:
+  FORMULA: ttyper
+  UPSTREAM: max-niederman/ttyper
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: macos-latest
+    outputs:
+      version: ${{ steps.livecheck.outputs.version }}
+    steps:
+      - name: Check for updates using brew livecheck
+        id: livecheck
+        run: |
+          set -euo pipefail
+          brew tap "${{ github.repository }}"
+          brew livecheck --json $FORMULA > livecheck.json
+          outdated=$(jq -r '.[0].version.outdated // false' livecheck.json)
+          if [ "$outdated" = "true" ]; then
+            version=$(jq -r '.[0].version.latest' livecheck.json)
+            echo "version=$version" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+
+  update-formula:
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Update formula
+        env:
+          VERSION: ${{ needs.check.outputs.version }}
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          BASE_URL="https://github.com/$UPSTREAM/archive/refs/tags"
+          TAG=$(gh release list --repo $UPSTREAM --json tagName --jq '.[].tagName | select(test("v?'$VERSION'$"))' | head -n1)
+          NEW_URL="$BASE_URL/$TAG.tar.gz"
+
+          NEW_SHA=$(curl -L $NEW_URL | shasum -a 256 | awk '{print $1}')
+
+          sed -i.bak "s|\".*\" # url|\"$NEW_URL\" # url|" Formula/$FORMULA.rb
+          sed -i.bak "s/\".*\" # sha256/\"$NEW_SHA\" # sha256/" Formula/$FORMULA.rb
+
+          gh release view $TAG --repo $UPSTREAM --json assets --jq '.assets[].url' | grep 'gz$' > assets.txt
+
+          arm_macos_url=$(awk -F \/ '$NF ~ /aarch64/ && /darwin/ {print $0}' assets.txt)
+          intel_macos_url=$(awk -F \/ '$NF ~ /x86_64/ && /darwin/ {print $0}' assets.txt)
+          linux_url=$(awk -F \/ '$NF ~ /x86_64/ && /linux/ && /gnu/ {print $0}' assets.txt)
+
+          if [ -z "$arm_macos_url" ] || [ -z "$intel_macos_url" ] || [ -z "$linux_url" ]; then
+            echo "Could not find all required asset URLs"
+            exit 1
+          fi
+
+          sed -i.bak "s|\".*\" # arm_macos_url|\"$arm_macos_url\" # arm_macos_url|" Formula/$FORMULA.rb
+          sed -i.bak "s|\".*\" # intel_macos_url|\"$intel_macos_url\" # intel_macos_url|" Formula/$FORMULA.rb
+          sed -i.bak "s|\".*\" # linux_url|\"$linux_url\" # linux_url|" Formula/$FORMULA.rb
+
+          arm_macos_sha=$(curl -L $arm_macos_url | shasum -a 256 | awk '{print $1}')
+          intel_macos_sha=$(curl -L $intel_macos_url | shasum -a 256 | awk '{print $1}')
+          linux_sha=$(curl -L $linux_url | shasum -a 256 | awk '{print $1}')
+
+          sed -i.bak "s/\".*\" # arm_macos_sha256/\"$arm_macos_sha\" # arm_macos_sha256/" Formula/$FORMULA.rb
+          sed -i.bak "s/\".*\" # intel_macos_sha256/\"$intel_macos_sha\" # intel_macos_sha256/" Formula/$FORMULA.rb
+          sed -i.bak "s/\".*\" # linux_sha256/\"$linux_sha\" # linux_sha256/" Formula/$FORMULA.rb
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "${{ env.FORMULA }} ${{ needs.check.outputs.version }}"
+          title: "Bump ${{ env.FORMULA }} to v${{ needs.check.outputs.version }}"
+          body: "Automated update for ${{ env.FORMULA }} version v${{ needs.check.outputs.version }}"
+          base: main
+          branch: "update/${{ env.FORMULA }}-v${{ needs.check.outputs.version }}"
+          delete-branch: true
+          add-paths: "Formula/${{ env.FORMULA }}.rb"
