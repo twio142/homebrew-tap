@@ -14,23 +14,21 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Get current formula version
-        id: current_version
+        id: livecheck
         run: |
+          set -euo pipefail
           brew tap "${{ github.repository }}"
-          version=$(brew info --json=v2 "${{ github.repository }}/battery" | jq -r '.formulae[0].version')
-          echo "version=${version}" >> $GITHUB_OUTPUT
-
-      - name: Get latest release version from upstream
-        id: latest_version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          latest_tag=$(gh api repos/actuallymentor/battery/releases/latest --jq .tag_name)
-          latest_version=${latest_tag#v}
-          echo "version=${latest_version}" >> $GITHUB_OUTPUT
+          brew livecheck --json battery > livecheck.json
+          outdated=$(jq -r '.[0].version.outdated' livecheck.json)
+          if [ "$outdated" = "true" ]; then
+            version=$(jq -r '.[0].version.latest' livecheck.json)
+            echo "version=$version" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Formula Update PR
-        if: steps.latest_version.outputs.version != steps.current_version.outputs.version
+        if: steps.livecheck.outputs.version != ''
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -38,5 +36,5 @@ jobs:
           brew bump-formula-pr \
             --no-audit \
             --no-fork \
-            --version="${{ steps.latest_version.outputs.version }}" \
+            --version="${{ steps.livecheck.outputs.version }}" \
             "${{ github.repository }}/battery"
