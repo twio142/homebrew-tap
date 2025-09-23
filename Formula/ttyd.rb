@@ -8,8 +8,14 @@ class Ttyd < Formula
   head "https://github.com/tsl0922/ttyd.git", branch: "main"
 
   livecheck do
-    url :stable
+    url "https://github.com/tsl0922/ttyd/archive/refs/tags/1.7.7.tar.gz"
     strategy :github_latest
+  end
+
+  bottle do
+    rebuild 1
+    sha256 arm64_sequoia: "d85845aa489d2dd567f8f48a5bda953826c2fcae26f990814577e9b3d0f0f1b0"
+    sha256 x86_64_linux:  "79084de5700040f90f49e8f9e89040835745267f30f1f6bce01ca957a6ddefc9"
   end
 
   depends_on "cmake" => :build
