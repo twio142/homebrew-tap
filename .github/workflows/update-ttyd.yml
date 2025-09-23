@@ -1,4 +1,4 @@
-name: Update rime-ls
+name: Update ttyd
 
 on:
   workflow_dispatch:
@@ -6,8 +6,8 @@ on:
     - cron: "0 0 * * *"
 
 env:
-  FORMULA: rime-ls
-  UPSTREAM: wlh320/rime-ls
+  FORMULA: ttyd
+  UPSTREAM: tsl0922/ttyd
 
 permissions:
   contents: write
@@ -62,7 +62,7 @@ jobs:
     if: needs.check.outputs.version != ''
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-13, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -78,8 +78,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
-          sed -i.bak "s/sha256 \".*\"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
+          sed -i.bak "s|url ".*"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
+          sed -i.bak "s/sha256 ".*"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
 
           brew install --build-bottle "${{ github.repository }}/$FORMULA"
           brew bottle --json "$FORMULA"
@@ -126,8 +126,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
-          sed -i.bak "s/sha256 \".*\"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
+          sed -i.bak "s|url ".*"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
+          sed -i.bak "s/sha256 ".*"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
 
           brew bottle --merge --write --no-commit bottles/*.bottle.json --root-url="https://github.com/${{ github.repository }}/releases/download/$FORMULA-v$VERSION"
 

@@ -6,6 +6,10 @@ on:
     - cron: "0 0 * * 0"
   workflow_dispatch:
 
+env:
+  FORMULA: propertree
+  UPSTREAM: corpnewt/ProperTree
+
 permissions:
   contents: write
   pull-requests: write
@@ -16,27 +20,21 @@ jobs:
     steps:
       - name: Check for updates using brew livecheck
         id: livecheck
-        run: |
-          set -euo pipefail
-          brew tap "${{ github.repository }}"
-          livecheck_output=$(brew livecheck --json propertree 2>/dev/null || echo '[]')
-          outdated=$(echo "$livecheck_output" | jq -r '.[0].version.outdated // false')
-          if [ "$outdated" = "true" ]; then
-            latest_version=$(echo "$livecheck_output" | jq -r '.[0].version.latest')
-            echo "version=$latest_version" >> $GITHUB_OUTPUT
-          else
-            echo "version=" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Get latest commit hash
-        id: get_commit
-        if: steps.livecheck.outputs.version != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          latest_commit=$(gh api repos/corpnewt/ProperTree/commits --jq '.[0].sha')
-          echo "commit=$latest_commit" >> $GITHUB_OUTPUT
+          brew tap "${{ github.repository }}"
+          brew livecheck --json $FORMULA > livecheck.json
+          outdated=$(jq -r '.[0].version.outdated' livecheck.json)
+          if [ "$outdated" = "true" ]; then
+            version=$(jq -r '.[0].version.latest' livecheck.json)
+            echo "version=$version" >> $GITHUB_OUTPUT
+            commit=$(gh api repos/$UPSTREAM/commits --jq '.[0].sha')
+            echo "commit=$commit" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Update Homebrew formula
         if: steps.livecheck.outputs.version != ''
@@ -46,12 +44,12 @@ jobs:
           set -euo pipefail
 
           version="${{ steps.livecheck.outputs.version }}"
-          latest_commit="${{ steps.get_commit.outputs.commit }}"
-          url="https://github.com/corpnewt/ProperTree/archive/${latest_commit}.zip"
+          commit="${{ steps.livecheck.outputs.commit }}"
+          url="https://github.com/$UPSTREAM/archive/${commit}.tar.gz"
 
           brew bump-formula-pr \
             --no-audit \
             --no-fork \
             --url "$url" \
             --version "$version" \
-            ${{ github.repository }}/propertree
+            ${{ github.repository }}/$FORMULA
