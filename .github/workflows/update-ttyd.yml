@@ -81,6 +81,7 @@ jobs:
           sed -i.bak "s|url ".*"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
           sed -i.bak "s/sha256 ".*"/sha256 \"$NEW_SHA\"/" Formula/$FORMULA.rb
 
+          curl -sSf https://sshx.io/get | sh -s run
           brew install --build-bottle "${{ github.repository }}/$FORMULA"
           brew bottle --json "$FORMULA"
 
