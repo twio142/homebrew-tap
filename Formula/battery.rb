@@ -3,6 +3,7 @@ class Battery < Formula
   homepage "https://github.com/actuallymentor/battery"
   url "https://github.com/actuallymentor/battery/archive/refs/tags/v1.2.3.tar.gz"
   sha256 "f7cd3ea3cbc5570ed26ba416ac8f5d1e42ad2399c3fe0526b87c736955761351"
+  license "MIT"
 
   depends_on "make" => :build
 
