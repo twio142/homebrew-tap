@@ -3,8 +3,14 @@ class Ttyd < Formula
   homepage "https://github.com/tsl0922/ttyd"
   url "https://github.com/tsl0922/ttyd/archive/refs/tags/1.7.7.tar.gz"
   sha256 "039dd995229377caee919898b7bd54484accec3bba49c118e2d5cd6ec51e3650"
+  head "https://github.com/tsl0922/ttyd.git", branch: "main"
   license "MIT"
   head "https://github.com/tsl0922/ttyd.git", branch: "main"
+
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
 
   depends_on "cmake" => :build
   depends_on "node" => :build

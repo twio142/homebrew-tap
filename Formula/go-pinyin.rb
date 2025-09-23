@@ -4,6 +4,11 @@ class GoPinyin < Formula
   url "https://github.com/twio142/go-pinyin/archive/refs/tags/v0.1.1.tar.gz"
   sha256 "e7fca4a5537230f30b448feb648edee3b0eab214a9d6f0a0c977b953370ee17f"
 
+  livecheck do
+    url :homepage
+    strategy :git
+  end
+
   depends_on "go" => :build
 
   def install
