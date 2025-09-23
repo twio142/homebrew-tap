@@ -20,7 +20,6 @@ jobs:
       url: ${{ steps.livecheck.outputs.url }}
       sha256: ${{ steps.livecheck.outputs.sha256 }}
     steps:
-      - uses: actions/checkout@v4
       - id: livecheck
         env:
           EVENT: ${{ github.event_name }}
@@ -43,7 +42,7 @@ jobs:
             echo "version=$VERSION" >> $GITHUB_OUTPUT
 
             BASE_URL="https://github.com/$UPSTREAM/archive/refs/tags"
-            TAG=$(gh release list --repo $UPSTREAM --json tagName --jq 'first | .tagName')
+            TAG=$(gh release list --repo $UPSTREAM --json tagName --jq '.[0].tagName')
             NEW_URL="$BASE_URL/$TAG.tar.gz"
             echo "url=$NEW_URL" >> $GITHUB_OUTPUT
 
