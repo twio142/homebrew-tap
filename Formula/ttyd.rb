@@ -23,26 +23,6 @@ class Ttyd < Formula
   depends_on "json-c"
   depends_on "libwebsockets"
 
-  resource "jetbrainsmono-bold" do
-    url "https://raw.githubusercontent.com/twio142/homebrew-tap/main/resources/ttyd/JetBrainsMonoNF-Bold.woff2"
-    sha256 "c09e32b3ad3f44a2fb41db730c01bd56588db7f0aa27c01854ad979fac2394d9"
-  end
-
-  resource "jetbrainsmono-bolditalic" do
-    url "https://raw.githubusercontent.com/twio142/homebrew-tap/main/resources/ttyd/JetBrainsMonoNF-BoldItalic.woff2"
-    sha256 "56389785138d9803322b6155a13e06d5045cbfa9c439c6c74869801f685b6f0e"
-  end
-
-  resource "jetbrainsmono-italic" do
-    url "https://raw.githubusercontent.com/twio142/homebrew-tap/main/resources/ttyd/JetBrainsMonoNF-Italic.woff2"
-    sha256 "a6b98dcdef1e4c4b02d95e9c2d0550a8218b5a1d63c2b05b89a685edc2c8d6a5"
-  end
-
-  resource "jetbrainsmono-regular" do
-    url "https://raw.githubusercontent.com/twio142/homebrew-tap/main/resources/ttyd/JetBrainsMonoNF-Regular.woff2"
-    sha256 "909f0f61256c129559fb528382887c481f3944a4c71a6a1d06311fc61c2408da"
-  end
-
   def install
     inreplace "html/src/components/app.tsx" do |s|
       s.gsub!(/fontSize: \d+/, "fontSize: 12")
@@ -62,10 +42,11 @@ class Ttyd < Formula
     EOS
     File.open("html/src/style/index.scss", "a") { |f| f.write("\n" + font_faces) }
 
-    (buildpath/"html/src").install resource("jetbrainsmono-bold")
-    (buildpath/"html/src").install resource("jetbrainsmono-bolditalic")
-    (buildpath/"html/src").install resource("jetbrainsmono-italic")
-    (buildpath/"html/src").install resource("jetbrainsmono-regular")
+    tap_resources_path = tap.path/"resources/ttyd"
+    cp tap_resources_path/"JetBrainsMonoNF-Bold.woff2", buildpath/"html/src/"
+    cp tap_resources_path/"JetBrainsMonoNF-BoldItalic.woff2", buildpath/"html/src/"
+    cp tap_resources_path/"JetBrainsMonoNF-Italic.woff2", buildpath/"html/src/"
+    cp tap_resources_path/"JetBrainsMonoNF-Regular.woff2", buildpath/"html/src/"
 
     cd "html" do
       ENV.prepend_path "PATH", Formula["node"].opt_bin
