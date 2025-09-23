@@ -11,7 +11,6 @@ class DarkNotify < Formula
   end
 
   depends_on "rust" => :build
-  depends_on arch: :arm64
   depends_on :macos
 
   def install
