@@ -1,0 +1,41 @@
+name: Update dark-notify
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-formula-pr:
+    runs-on: macos-latest
+    steps:
+      - name: Check for updates using brew livecheck
+        id: livecheck
+        run: |
+          set -euo pipefail
+          brew tap "${{ github.repository }}"
+          livecheck_output=$(brew livecheck --json dark-notify 2>/dev/null || echo '[]')
+          outdated=$(echo "$livecheck_output" | jq -r '.[0].version.outdated // false')
+          if [ "$outdated" = "true" ]; then
+            latest_version=$(echo "$livecheck_output" | jq -r '.[0].version.latest')
+            echo "version=$latest_version" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump formula PR
+        if: steps.livecheck.outputs.version != ''
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          brew bump-formula-pr \
+            --no-audit \
+            --no-fork \
+            --version="${{ steps.livecheck.outputs.version }}" \
+            "dark-notify"
+
