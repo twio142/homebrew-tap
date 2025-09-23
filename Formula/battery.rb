@@ -5,6 +5,11 @@ class Battery < Formula
   sha256 "f7cd3ea3cbc5570ed26ba416ac8f5d1e42ad2399c3fe0526b87c736955761351"
   license "MIT"
 
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
   depends_on "make" => :build
 
   resource "smc" do
