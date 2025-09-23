@@ -85,11 +85,7 @@ jobs:
           brew bottle --json "$FORMULA"
 
           BOTTLE_FILE=$(ls *.bottle*.tar.gz)
-          RELEASE_TAG="$FORMULA-v$VERSION"
-
-          if [ "$(gh release view "$RELEASE_TAG" --json assets -q ".assets[] | .name == \"$BOTTLE_FILE\"")" = "false" ]; then
-            gh release upload "$RELEASE_TAG" "$BOTTLE_FILE"
-          fi
+          gh release upload "$FORMULA-v$VERSION" "$BOTTLE_FILE" --clobber
 
       - name: Upload bottle and JSON
         uses: actions/upload-artifact@v4
