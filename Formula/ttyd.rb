@@ -6,6 +6,11 @@ class Ttyd < Formula
   license "MIT"
   head "https://github.com/tsl0922/ttyd.git", branch: "main"
 
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
   depends_on "cmake" => :build
   depends_on "node" => :build
   depends_on "json-c"
