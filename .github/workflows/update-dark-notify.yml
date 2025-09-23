@@ -1,0 +1,93 @@
+name: Update dark-notify
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+env:
+  FORMULA: dark-notify
+  UPSTREAM: cormacrelf/dark-notify
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: macos-latest
+    outputs:
+      version: ${{ steps.livecheck.outputs.version }}
+      url: ${{ steps.livecheck.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: livecheck
+        env:
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          brew tap $REPO
+
+          brew livecheck $REPO/$FORMULA --json > livecheck.json
+          PROCEED=$(jq -r '.[0].version.outdated' livecheck.json)
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            PROCEED="true"
+          fi
+
+          if [ "$PROCEED" = "true" ]; then
+            VERSION=$(jq -r '.[0].version.latest' livecheck.json)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            BASE_URL="https://github.com/$UPSTREAM/archive/refs/tags"
+            NEW_URL="$BASE_URL/v$VERSION.tar.gz"
+            echo "url=$NEW_URL" >> $GITHUB_OUTPUT
+          else
+            echo "version=" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-release:
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: macos-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Homebrew/actions/setup-homebrew@main
+
+      - name: Build bottle and release
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.check.outputs.version }}
+          NEW_URL: ${{ needs.check.outputs.url }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          sed -i.bak "s|url \".*\"|url \"$NEW_URL\"|" Formula/$FORMULA.rb
+
+          SHA256=$(curl -L "$NEW_URL" | shasum -a 256 | awk '{print $1}')
+          sed -i.bak "s/sha256 \".*\"/sha256 \"$SHA256\"/" Formula/$FORMULA.rb
+
+          brew install --build-bottle "$REPO/$FORMULA"
+          brew bottle --json "$FORMULA"
+
+          if ! gh release view "$FORMULA-v$VERSION" &>/dev/null; then
+            gh release create "$FORMULA-v$VERSION" --title "$FORMULA v$VERSION" bottles/*.bottle*.tar.gz
+          fi
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "$FORMULA ${{ needs.check.outputs.version }}"
+          title: "Bump $FORMULA to v${{ needs.check.outputs.version }}"
+          body: "Automated update for $FORMULA version v${{ needs.check.outputs.version }}"
+          base: main
+          branch: "update/$FORMULA-v${{ needs.check.outputs.version }}"
+          delete-branch: true
+          add-paths: "Formula/$FORMULA.rb"
