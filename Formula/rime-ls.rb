@@ -11,9 +11,9 @@ class RimeLs < Formula
   end
 
   bottle do
-    rebuild 1
-    sha256 cellar: :any,                 arm64_sequoia: "4fcb33747ad53b40ce13e69489b9e3b412d71d37514eff6d23c2546fd82bba23"
-    sha256 cellar: :any_skip_relocation, x86_64_linux:  "c5e19a29bdcf5b1494a2645c4af9882794e2e41d68624bc343c02f354c5411a9"
+    rebuild 2
+    sha256 cellar: :any,                 arm64_sequoia: "18c94d70613756d534c9830e9577e8f6a449ab085af01ea7bed2545bc851dff8"
+    sha256 cellar: :any_skip_relocation, x86_64_linux:  "3a9ed1a187a684a418e0053c7a0e6d2f3556cd16a6543d68b0dfbe7e1a6a98fd"
   end
 
   depends_on "rust" => :build
