@@ -1,14 +1,21 @@
 class DarkNotify < Formula
   desc "Watcher for macOS 10.14+ light/dark mode changes"
-  homepage "https://github.com/twio142/dark-notify"
-  url "https://github.com/twio142/dark-notify/releases/download/v1.0.2-mod/dark-notify-arm64.tar.gz"
-  sha256 "b15ebbc9eccfc4bed57b7c6e7142fe29577d5405bf4c30370ea059e6fd86d9ec"
+  homepage "https://github.com/cormacrelf/dark-notify"
+  url "https://github.com/cormacrelf/dark-notify/archive/refs/tags/v0.1.2.tar.gz"
+  sha256 "802aee7ea3e3dd6bf5a8a4b451b9310582fc9f04a336907affd19f97a8cda679"
+  head "https://github.com/cormacrelf/dark-notify.git", branch: "master"
 
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
+  depends_on "rust" => :build
   depends_on arch: :arm64
   depends_on :macos
 
   def install
-    bin.install Dir["dark-notify*"].first => "dark-notify"
+    system "cargo", "install", *std_cargo_args
   end
 
   test do
