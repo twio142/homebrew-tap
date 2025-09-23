@@ -11,6 +11,13 @@ class Ttyd < Formula
     strategy :github_latest
   end
 
+  bottle do
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/ttyd-v1.7.7"
+    rebuild 1
+    sha256 arm64_sequoia: "5a7d794c06b6faead940e4283dfda5d94d19b354d5ac24e6d4e372ab6b3d7eb3"
+    sha256 x86_64_linux:  "5cffa72a1b7d06bce52f28caa240c83f6267061349801dfcaec7de596e553b04"
+  end
+
   depends_on "cmake" => :build
   depends_on "node" => :build
   depends_on "json-c"
