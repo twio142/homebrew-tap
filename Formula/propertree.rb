@@ -4,6 +4,7 @@ class Propertree < Formula
   url "https://github.com/corpnewt/ProperTree/archive/417837adc32a9e0ffa4895074889ebf4f52e6c80.tar.gz"
   version "2025.08.31"
   sha256 "958f9320b3db36987dd323db7731549cfec0e35d4bf3e5b8a2ca2e9b3c458a38"
+  license "BSD-3-Clause"
 
   livecheck do
     url "https://api.github.com/repos/corpnewt/ProperTree/commits"

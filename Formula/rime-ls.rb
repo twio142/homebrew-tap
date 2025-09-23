@@ -14,12 +14,10 @@ class RimeLs < Formula
   depends_on "librime"
 
   def install
-    # Set environment variables to point to the Homebrew-installed librime
     ENV["LIBRIME_INCLUDE_DIR"] = Formula["librime"].opt_include
     ENV["LIBRIME_LIB_DIR"] = Formula["librime"].opt_lib
 
-    system "cargo", "build", "--release"
-    bin.install "target/release/rime_ls"
+    system "cargo", "install", *std_cargo_args
   end
 
   test do
