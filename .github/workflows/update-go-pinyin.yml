@@ -18,11 +18,11 @@ jobs:
         run: |
           set -euo pipefail
           brew tap "${{ github.repository }}"
-          livecheck_output=$(brew livecheck --json go-pinyin 2>/dev/null || echo '[]')
-          outdated=$(echo "$livecheck_output" | jq -r '.[0].version.outdated // false')
+          brew livecheck --json go-pinyin > livecheck.json
+          outdated=$(jq -r '.[0].version.outdated // false' livecheck.json)
           if [ "$outdated" = "true" ]; then
-            latest_version=$(echo "$livecheck_output" | jq -r '.[0].version.latest')
-            echo "version=$latest_version" >> $GITHUB_OUTPUT
+            version=$(jq -r '.[0].version.latest' livecheck.json)
+            echo "version=$version" >> $GITHUB_OUTPUT
           else
             echo "version=" >> $GITHUB_OUTPUT
           fi
