@@ -12,6 +12,12 @@ class Ttyd < Formula
     strategy :github_latest
   end
 
+  bottle do
+    rebuild 1
+    sha256 arm64_sequoia: "b41654b6ba6af018bb59657a9e011d1d18e619c167c482229d07f065acbeebff"
+    sha256 x86_64_linux:  "181d4ab9270d5618b948e6d8f073b4179a71f7e7a3adfc41e8a2b17a75b9dcb6"
+  end
+
   depends_on "cmake" => :build
   depends_on "node" => :build
   depends_on "json-c"
