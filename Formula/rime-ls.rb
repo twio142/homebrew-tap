@@ -10,6 +10,12 @@ class RimeLs < Formula
     strategy :github_latest
   end
 
+  bottle do
+    rebuild 1
+    sha256 cellar: :any,                 arm64_sequoia: "4fcb33747ad53b40ce13e69489b9e3b412d71d37514eff6d23c2546fd82bba23"
+    sha256 cellar: :any_skip_relocation, x86_64_linux:  "c5e19a29bdcf5b1494a2645c4af9882794e2e41d68624bc343c02f354c5411a9"
+  end
+
   depends_on "rust" => :build
   depends_on "librime"
 
