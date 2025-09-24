@@ -1,8 +1,8 @@
 class Propertree < Formula
   desc "Cross-platform GUI plist editor written in python"
   homepage "https://github.com/corpnewt/ProperTree"
-  url "https://github.com/corpnewt/ProperTree/archive/417837adc32a9e0ffa4895074889ebf4f52e6c80.tar.gz"
-  version "2025.08.31"
+  url "https://github.com/corpnewt/ProperTree/archive/417837ad.tar.gz"
+  version "25.08.31-417837ad"
   sha256 "958f9320b3db36987dd323db7731549cfec0e35d4bf3e5b8a2ca2e9b3c458a38"
   license "BSD-3-Clause"
 
@@ -10,10 +10,10 @@ class Propertree < Formula
     url "https://api.github.com/repos/corpnewt/ProperTree/commits"
     strategy :page_match do |page|
       require "json"
-      data = JSON.parse(page)
-      Date.parse(data.first["commit"]["committer"]["date"]).strftime("%Y.%m.%d")
+      data = JSON.parse(page).first
+      Date.parse(data["commit"]["committer"]["date"]).strftime("%y.%m.%d") + "-" + data["sha"][0..7]
     end
-    regex(/\d{4}\.\d{2}\.\d{2}/i)
+    regex(/\d{2}\.\d{2}\.\d{2}-[0-9a-f]{8}/i)
   end
 
   depends_on "python-tk@3.13"
