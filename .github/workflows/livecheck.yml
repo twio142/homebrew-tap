@@ -1,0 +1,58 @@
+name: Livecheck
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-formula-pr:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for updates
+        id: livecheck
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          brew tap "${{ github.repository }}"
+
+          for f in Formula/*.rb; do
+            formula=$(basename "$f" .rb)
+            echo "Checking $formula"
+
+            brew livecheck --json --formula "$formula" > livecheck.json
+            outdated=$(jq -r '.[0]?.version.outdated // false' livecheck.json)
+
+            if [ "$outdated" = "true" ]; then
+              version=$(jq -r '.[0].version.latest' livecheck.json)
+              echo "Formula $formula is outdated. Latest version: $version"
+
+              if echo $version | grep -qE '^\d\d\.\d\d\.\d\d-[a-z0-9]{8}$'; then
+                commit=$(echo $version | cut -d- -f2)
+                brew info "$formula" --json=v2 > info.json
+                current_version=$(jq -r '.formulae[0].versions.stable' info.json)
+                current_commit=$(echo $current_version | cut -d- -f2)
+                url=$(jq -r '.formulae[0].urls.stable.url' info.json)
+                url=${url/$current_commit/$commit}
+                brew bump-formula-pr \
+                  --no-audit \
+                  --no-fork \
+                  --version="$version" \
+                  --url="$url" \
+                  "$formula"
+              else
+                brew bump-formula-pr \
+                  --no-audit \
+                  --no-fork \
+                  --version="$version" \
+                  "$formula"
+              fi
+            fi
+          done
