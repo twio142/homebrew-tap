@@ -34,18 +34,13 @@ jobs:
               version=$(jq -r '.[0].version.latest' livecheck.json)
               echo "Formula $formula is outdated. Latest version: $version"
 
-              if echo $version | grep -qE '^\d\d\.\d\d\.\d\d-[a-z0-9]{8}$'; then
-                commit=$(echo $version | cut -d- -f2)
-                brew info "$formula" --json=v2 > info.json
-                current_version=$(jq -r '.formulae[0].versions.stable' info.json)
-                current_commit=$(echo $current_version | cut -d- -f2)
-                url=$(jq -r '.formulae[0].urls.stable.url' info.json)
-                url=${url/$current_commit/$commit}
+              if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
+                commit=$(echo "$version" | cut -d- -f2)
                 brew bump-formula-pr \
                   --no-audit \
                   --no-fork \
                   --version="$version" \
-                  --url="$url" \
+                  --revision="$commit" \
                   "$formula"
               else
                 brew bump-formula-pr \

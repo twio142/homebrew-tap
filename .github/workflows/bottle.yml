@@ -13,23 +13,24 @@ jobs:
   prep:
     runs-on: ubuntu-latest
     outputs:
-      formula-file: ${{ steps.get-info.outputs.formula-file }}
       formula: ${{ steps.get-info.outputs.formula }}
       version: ${{ steps.get-info.outputs.version }}
+      root_url: ${{ steps.get-info.outputs.root_url }}
     steps:
       - uses: actions/checkout@v4
       - id: get-info
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          REPO: ${{ github.repository }}
         run: |
-          FILE=$(gh pr view ${{ github.event.pull_request.number }} --json files -q '.files[0].path')
-          FORMULA=$(basename "$FILE" .rb)
+          FORMULA=$(echo "$PR_TITLE" | awk '{print $1}')
           VERSION=$(echo "$PR_TITLE" | awk '{print $2}')
-
-          echo "formula-file=$FILE" >> $GITHUB_OUTPUT
-          echo "formula=$FORMULA" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          ROOT_URL="https://github.com/$REPO/releases/download/$FORMULA-v$VERSION"
+          {
+            echo "formula=$FORMULA"
+            echo "version=$VERSION"
+            echo "root_url=$ROOT_URL"
+          } >> "$GITHUB_OUTPUT"
 
   test-bot:
     needs: prep
@@ -47,15 +48,15 @@ jobs:
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORMULA: ${{ needs.prep.outputs.formula }}
-          VERSION: ${{ needs.prep.outputs.version }}
+          ROOT_URL: ${{ needs.prep.outputs.root_url }}
         run: |
           set -euo pipefail
 
           brew test-bot "$FORMULA"
-          brew bottle --json --root-url="https://github.com/${{ github.repository }}/releases/download/$FORMULA-v$VERSION" "$FORMULA"
+          brew bottle --json --root-url="$ROOT_URL" "$FORMULA"
 
-          TARBALL=$(ls *.bottle*.tar.gz)
-          JSON_FILE=$(ls *.bottle.json)
+          TARBALL=$(ls -- *.bottle*.tar.gz)
+          JSON_FILE=$(ls -- *.bottle.json)
           BOTTLE=$(jq -r '.. | .filename? | select(.)' "$JSON_FILE" | head -n 1)
           mv "$TARBALL" "$BOTTLE"
 
@@ -96,25 +97,28 @@ jobs:
             exit 0
           fi
 
-          if ! gh release view "$FORMULA-v$VERSION" &>/dev/null; then
-            gh release create "$FORMULA-v$VERSION" --title "$FORMULA v$VERSION"
+          TAG="$FORMULA-v$VERSION"
+          if ! gh release view "$TAG" &>/dev/null; then
+            gh release create "$TAG" --title "$FORMULA v$VERSION"
           fi
-          gh release upload "$FORMULA-v$VERSION" bottles/*.tar.gz --clobber
+          gh release upload "$TAG" bottles/*.tar.gz --clobber
 
-          echo "tag=$FORMULA-v$VERSION" >> $GITHUB_OUTPUT
+          echo proceed=true >> "$GITHUB_OUTPUT"
 
       - name: Update formula file
-        if: steps.release.outputs.tag != ''
+        if: steps.release.outputs.proceed == 'true'
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FORMULA_FILE: ${{ needs.prep.outputs.formula-file }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          ROOT_URL: ${{ needs.prep.outputs.root_url }}
+          FORMULA: ${{ needs.prep.outputs.formula }}
         run: |
           set -euo pipefail
 
-          brew bottle --merge --write --no-commit --root-url="https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag }}" bottles/*.bottle.json
+          brew bottle --merge --write --no-commit --root-url="$ROOT_URL" bottles/*.bottle.json
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "$FORMULA_FILE"
-          git commit -m "Update bottles for $FORMULA_FILE [skip ci]" || echo "No changes to commit"
+          git add "Formula/$FORMULA.rb"
+          git commit -m "$PR_TITLE bottle block [skip ci]" || echo "No changes to commit"
           git push origin HEAD

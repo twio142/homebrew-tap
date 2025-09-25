@@ -1,7 +1,8 @@
 class Propertree < Formula
   desc "Cross-platform GUI plist editor written in python"
   homepage "https://github.com/corpnewt/ProperTree"
-  url "https://github.com/corpnewt/ProperTree/archive/417837ad.tar.gz"
+  url "https://github.com/corpnewt/ProperTree.git#25.08.31-417837ad",
+    revision: "417837ad"
   version "25.08.31-417837ad"
   sha256 "958f9320b3db36987dd323db7731549cfec0e35d4bf3e5b8a2ca2e9b3c458a38"
   license "BSD-3-Clause"
