@@ -23,6 +23,11 @@ class Ttyd < Formula
   depends_on "json-c"
   depends_on "libwebsockets"
 
+  resource "fonts" do
+    url "https://github.com/twio142/homebrew-tap/releases/download/ttyd-resources/fonts.tar.gz"
+    sha256 "5aadfd13ebb7388832ba3b61d36b653ee9fae4d15f2ea501db964d11ef13d07e"
+  end
+
   def install
     inreplace "html/src/components/app.tsx" do |s|
       s.gsub!(/fontSize: \d+/, "fontSize: 12")
@@ -42,11 +47,9 @@ class Ttyd < Formula
     EOS
     File.open("html/src/style/index.scss", "a") { |f| f.write("\n" + font_faces) }
 
-    tap_resources_path = tap.path/"resources/ttyd"
-    cp tap_resources_path/"JetBrainsMonoNF-Bold.woff2", buildpath/"html/src/"
-    cp tap_resources_path/"JetBrainsMonoNF-BoldItalic.woff2", buildpath/"html/src/"
-    cp tap_resources_path/"JetBrainsMonoNF-Italic.woff2", buildpath/"html/src/"
-    cp tap_resources_path/"JetBrainsMonoNF-Regular.woff2", buildpath/"html/src/"
+    resource("fonts").stage do
+      (buildpath/"html/src").install Dir["*.woff2"]
+    end
 
     cd "html" do
       ENV.prepend_path "PATH", Formula["node"].opt_bin
