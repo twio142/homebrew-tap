@@ -1,7 +1,7 @@
 class Propertree < Formula
   desc "Cross-platform GUI plist editor written in python"
   homepage "https://github.com/corpnewt/ProperTree"
-  url "https://github.com/corpnewt/ProperTree.git#25.08.31-417837ad",
+  url "https://github.com/corpnewt/ProperTree#25.08.31-417837ad",
     revision: "417837ad"
   version "25.08.31-417837ad"
   sha256 "958f9320b3db36987dd323db7731549cfec0e35d4bf3e5b8a2ca2e9b3c458a38"
@@ -35,9 +35,9 @@ class Propertree < Formula
   def caveats
     <<~EOS
       ProperTree.app is installed to:
-        #{prefix}/ProperTree.app
+        #{opt_prefix}/ProperTree.app
       To make it available in your /Applications folder, you can run:
-        ln -s #{prefix}/ProperTree.app /Applications/
+        ln -s #{opt_prefix}/ProperTree.app /Applications/
     EOS
   end
 
