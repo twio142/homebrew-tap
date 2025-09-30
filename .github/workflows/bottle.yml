@@ -1,30 +1,47 @@
 name: Build bottles
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - "bump-*"
     paths:
       - "Formula/**.rb"
+  workflow_dispatch:
+    inputs:
+      formula:
+        description: Formula to build the bottle for
+        required: true
 
 permissions:
   contents: write
 
 jobs:
   prep:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     outputs:
       formula: ${{ steps.get-info.outputs.formula }}
       version: ${{ steps.get-info.outputs.version }}
       root_url: ${{ steps.get-info.outputs.root_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: get-info
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
           REPO: ${{ github.repository }}
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          FORMULA=$(echo "$PR_TITLE" | awk '{print $1}')
-          VERSION=$(echo "$PR_TITLE" | awk '{print $2}')
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.formula }}" ]; then
+            FORMULA="${{ github.event.inputs.formula }}"
+            FORMULA_FILE="Formula/$FORMULA.rb"
+          else
+            FORMULA_FILE=$(git diff --name-only origin/main...HEAD | grep "Formula/.*\\.rb" | head -n1)
+            FORMULA=$(basename "$FORMULA_FILE" .rb)
+          fi
+
+          brew tap "${REPO}"
+          VERSION=$(brew info --json --formula "$FORMULA" | jq -r '.[0].versions.stable')
           ROOT_URL="https://github.com/$REPO/releases/download/$FORMULA-v$VERSION"
           {
             echo "formula=$FORMULA"
@@ -113,5 +130,5 @@ jobs:
         if: steps.release.outputs.commit == '1'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "${{ github.event.pull_request.title }} bottle block [skip ci]"
+          commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
           file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
