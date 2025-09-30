@@ -8,11 +8,14 @@ class Propertree < Formula
   license "BSD-3-Clause"
 
   livecheck do
-    url "https://api.github.com/repos/corpnewt/ProperTree/commits"
+    url "https://github.com/corpnewt/ProperTree/commits/master.atom"
     strategy :page_match do |page|
-      require "json"
-      data = JSON.parse(page).first
-      Date.parse(data["commit"]["committer"]["date"]).strftime("%y.%m.%d") + "-" + data["sha"][0..7]
+      require "rexml/document"
+      xml = REXML::Document.new(page)
+      latest_commit_date = xml.elements["//entry/updated"]&.text
+      latest_commit_hash = xml.elements["//entry/link[@rel='alternate']"]&.attributes&.[]("href")&.split("/")&.last
+      next if latest_commit_date.blank? || latest_commit_hash.blank?
+      "#{Date.parse(latest_commit_date).strftime("%y.%m.%d")}-#{latest_commit_hash[0..7]}"
     end
     regex(/\d{2}\.\d{2}\.\d{2}-[0-9a-f]{8}/i)
   end
