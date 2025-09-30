@@ -46,7 +46,9 @@ jobs:
                 --no-audit \
                 --write-only \
                 --version="$version" \
-                "$formula"
+                "$REPO/$formula"
+
+              cat "Formula/$formula.rb"
 
               if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
                 revision=$(brew info --json --formula "$REPO/$formula" | jq -r '.[0].urls.stable.revision // empty')
