@@ -3,8 +3,8 @@ class Propertree < Formula
   homepage "https://github.com/corpnewt/ProperTree"
   url "https://github.com/corpnewt/ProperTree.git",
     using:    :git,
-    revision: "417837ad"
-  version "25.08.31-417837ad"
+    revision: "7cd845d9"
+  version "25.09.28-7cd845d9"
   license "BSD-3-Clause"
 
   livecheck do
@@ -21,6 +21,11 @@ class Propertree < Formula
       "#{Date.parse(latest_commit_date).strftime("%y.%m.%d")}-#{latest_commit_hash[0..7]}"
     end
     regex(/\d{2}\.\d{2}\.\d{2}-[0-9a-f]{8}/i)
+  end
+
+  bottle do
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.08.31-417837ad"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "2c172e525ba147e1bd8aca844bb19bd38c6d00f93f4364df4dc21a3e9ec14e9b"
   end
 
   depends_on "python-tk@3.13"
