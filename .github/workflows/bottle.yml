@@ -70,7 +70,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          brew test-bot "$REPO/$FORMULA"
+          brew test-bot --skip-setup --testing-formulae "$REPO/$FORMULA"
           brew bottle --json --root-url="$ROOT_URL" "$REPO/$FORMULA"
 
           TARBALL=$(ls -- *.bottle*.tar.gz)
