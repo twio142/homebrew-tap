@@ -10,6 +10,12 @@ class Battery < Formula
     strategy :github_latest
   end
 
+  bottle do
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/battery-v1.2.3"
+    rebuild 1
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "225313f50fd55290c9f3952d8b04913d050cfece2817f1f0510e3915bbb2fdcd"
+  end
+
   depends_on "make" => :build
 
   resource "smc" do
