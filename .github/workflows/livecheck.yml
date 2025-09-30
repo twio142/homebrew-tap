@@ -41,14 +41,25 @@ jobs:
               version=$(jq -r '.[0].version.latest' livecheck.json)
               echo "Formula $formula is outdated. Latest version: $version"
 
+              brew bump-formula-pr \
+                --no-audit \
+                --write-only \
+                --version="$version" \
+                "$formula"
+
               if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
                 commit=$(echo "$version" | cut -d- -f2)
-                sed -i '' "s/revision: \".*\"/revision: \"$commit\"/" "$f"
+                old_version=$(jq -r '.[0].version.current' livecheck.json)
+                old_commit=$(echo "$old_version" | cut -d- -f2)
+                sed -i '' "s/\"$old_commit\"/\"$commit\"/" "Formula/$formula.rb"
               fi
-              brew bump-formula-pr \
-              --no-audit \
-              --no-fork \
-              --version="$version" \
-              "$REPO/$formula"
+
+              git config user.name "autobump"
+              git config user.email "autobump@bot"
+              git checkout -b "bump-$formula-$version"
+              git commit -am "Bump $formula to $version"
+              git push --set-upstream origin "bump-$formula-$version"
+
+              gh pr create --title "$formula $version" --body "Bumps $formula to $version"
             fi
           done
