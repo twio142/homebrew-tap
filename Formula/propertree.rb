@@ -23,6 +23,11 @@ class Propertree < Formula
     regex(/\d{2}\.\d{2}\.\d{2}-[0-9a-f]{8}/i)
   end
 
+  bottle do
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.08.31-417837ad"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "9c92c6c1863afe4c1eddfb251d31cda2caace177d982d053d8c8b48005d4ae28"
+  end
+
   depends_on "python-tk@3.13"
   depends_on "python@3.13"
 
