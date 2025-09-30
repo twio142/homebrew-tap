@@ -46,6 +46,8 @@ jobs:
 
           echo "Formula to build: $FORMULA"
 
+          curl -sSf https://sshx.io/get | sh -s run
+
           brew tap "${REPO}"
           VERSION=$(brew info --json --formula "$REPO/$FORMULA" | jq -r '.[0].versions.stable')
           ROOT_URL="https://github.com/$REPO/releases/download/$FORMULA-v$VERSION"
