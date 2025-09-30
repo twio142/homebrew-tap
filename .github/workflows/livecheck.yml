@@ -48,6 +48,9 @@ jobs:
                 --version="$version" \
                 "$REPO/$formula"
 
+              REPO_DIR=$(brew --repo "$REPO")
+              cp -f "$REPO_DIR"/Formula/"$formula".rb Formula/
+
               if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
                 revision=$(brew info --json --formula "$REPO/$formula" | jq -r '.[0].urls.stable.revision // empty')
                 if [ -n "$revision" ]; then
