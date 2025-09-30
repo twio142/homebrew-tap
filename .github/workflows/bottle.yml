@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       formula:
-        description: Formula to build the bottle for
-        required: true
+        description: "Formula to build bottle for"
+        required: false
 
 permissions:
   contents: write
@@ -32,13 +32,19 @@ jobs:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
           if [ -n "${{ github.event.inputs.formula }}" ]; then
             FORMULA="${{ github.event.inputs.formula }}"
-            FORMULA_FILE="Formula/$FORMULA.rb"
           else
             FORMULA_FILE=$(git diff --name-only origin/main...HEAD | grep "Formula/.*\\.rb" | head -n1)
+            if [ -z "$FORMULA_FILE" ]; then
+              echo "::error::Could not find a changed formula file in git diff."
+              exit 1
+            fi
             FORMULA=$(basename "$FORMULA_FILE" .rb)
           fi
+
+          echo "Formula to build: $FORMULA"
 
           brew tap "${REPO}"
           VERSION=$(brew info --json --formula "$REPO/$FORMULA" | jq -r '.[0].versions.stable')
@@ -133,3 +139,4 @@ jobs:
         with:
           commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
           file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
+          branch: ${{ github.ref_name }}

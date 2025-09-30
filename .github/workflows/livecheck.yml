@@ -64,7 +64,7 @@ jobs:
               git config user.name "autobump"
               git config user.email "autobump@bot"
               git checkout -b "bump-$formula-$version"
-              git commit -am "Bump $formula to $version"
+              git commit -am "$formula $version"
 
               git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPO"
               git push --set-upstream origin "bump-$formula-$version"
