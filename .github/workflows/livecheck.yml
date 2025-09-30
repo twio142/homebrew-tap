@@ -19,6 +19,7 @@ jobs:
         id: livecheck
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -45,7 +46,7 @@ jobs:
                 --no-audit \
                 --write-only \
                 --version="$version" \
-                "$formula"
+                "$REPO/$formula"
 
               if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
                 revision=$(brew info --json --formula "$REPO/$formula" | jq -r '.[0].urls.stable.revision // empty')
@@ -59,6 +60,8 @@ jobs:
               git config user.email "autobump@bot"
               git checkout -b "bump-$formula-$version"
               git commit -am "Bump $formula to $version"
+
+              git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPO"
               git push --set-upstream origin "bump-$formula-$version"
 
               gh pr create --title "$formula $version" --body "Bumps $formula to $version"
