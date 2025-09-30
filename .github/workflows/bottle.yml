@@ -135,8 +135,17 @@ jobs:
 
       - name: Commit changes
         if: steps.release.outputs.commit == '1'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
-          file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
-          branch: ${{ github.ref_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "Formula/${{ needs.prep.outputs.formula }}.rb"
+          if git diff --staged --quiet; then
+            echo "No changes to commit in Formula/${{ needs.prep.outputs.formula }}.rb"
+            exit 0
+          fi
+          git commit -m "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
+          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}"
+          git push origin HEAD:${{ github.ref_name }}

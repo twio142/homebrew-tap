@@ -42,24 +42,28 @@ jobs:
               version=$(jq -r '.[0].version.latest' livecheck.json)
               echo "Formula $formula is outdated. Latest version: $version"
 
-              if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
-                old_version=$(jq -r '.[0].version.current' livecheck.json)
-                old_commit=$(echo "$old_version" | cut -d- -f2)
-                commit=$(echo "$version" | cut -d- -f2)
-                sed -i '' \
-                  -e "s/version \"$old_version\"/version \"$version\"/" \
-                  -e "s/revision: \"$old_commit\"/revision: \"$commit\"/" \
-                  "Formula/$formula.rb"
+              brew info --json --formula "$REPO/$formula" > info.json
+              using_git=$(jq -r '.[0].urls.stable.using == "git"' info.json)
+
+              if [ "$using_git" = "true" ]; then
+                url=$(jq -r '.[0].urls.stable.url' info.json)
+                revision=$(git ls-remote "$url" HEAD | awk '{print $1}')
+                brew bump-formula-pr \
+                  --no-audit \
+                  --write-only \
+                  --version="$version" \
+                  --revision="$revision" \
+                  "$REPO/$formula"
               else
                 brew bump-formula-pr \
                   --no-audit \
                   --write-only \
                   --version="$version" \
                   "$REPO/$formula"
-
-                REPO_DIR=$(brew --repo "$REPO")
-                cp -f "$REPO_DIR"/Formula/"$formula".rb Formula/
               fi
+
+              REPO_DIR=$(brew --repo "$REPO")
+              cp -f "$REPO_DIR"/Formula/"$formula".rb Formula/
 
               git config user.name "autobump"
               git config user.email "autobump@bot"
