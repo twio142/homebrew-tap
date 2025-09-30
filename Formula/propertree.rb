@@ -1,18 +1,24 @@
 class Propertree < Formula
   desc "Cross-platform GUI plist editor written in python"
   homepage "https://github.com/corpnewt/ProperTree"
-  url "https://github.com/corpnewt/ProperTree.git#25.08.31-417837ad",
+  url "https://github.com/corpnewt/ProperTree.git",
+    using:    :git,
     revision: "417837ad"
   version "25.08.31-417837ad"
-  sha256 "958f9320b3db36987dd323db7731549cfec0e35d4bf3e5b8a2ca2e9b3c458a38"
   license "BSD-3-Clause"
 
   livecheck do
-    url "https://api.github.com/repos/corpnewt/ProperTree/commits"
+    url "https://github.com/corpnewt/ProperTree/commits/master.atom"
     strategy :page_match do |page|
-      require "json"
-      data = JSON.parse(page).first
-      Date.parse(data["commit"]["committer"]["date"]).strftime("%y.%m.%d") + "-" + data["sha"][0..7]
+      require "rexml/document"
+      xml = REXML::Document.new(page)
+      latest_commit_date = xml.elements["//entry/updated"]&.text
+      link = xml.elements["//entry/link[@rel='alternate']"]
+      href = link&.attributes&.[]("href")
+      latest_commit_hash = href&.split("/")&.last
+      next if latest_commit_date.blank? || latest_commit_hash.blank?
+
+      "#{Date.parse(latest_commit_date).strftime("%y.%m.%d")}-#{latest_commit_hash[0..7]}"
     end
     regex(/\d{2}\.\d{2}\.\d{2}-[0-9a-f]{8}/i)
   end
