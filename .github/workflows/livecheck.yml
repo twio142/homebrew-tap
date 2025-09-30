@@ -14,6 +14,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Check for updates
         id: livecheck
@@ -70,7 +72,6 @@ jobs:
               git checkout -b "bump-$formula-$version"
               git commit -am "$formula $version"
 
-              git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPO"
               git push --set-upstream origin "bump-$formula-$version"
 
               gh pr create --title "$formula $version" --body "Bumps $formula to $version"
