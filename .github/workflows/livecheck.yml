@@ -19,15 +19,22 @@ jobs:
         id: livecheck
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          brew tap "${{ github.repository }}"
+          brew tap "$REPO"
 
           for f in Formula/*.rb; do
             formula=$(basename "$f" .rb)
             echo "Checking $formula"
 
-            brew livecheck --json --formula "$formula" > livecheck.json
+            brew livecheck --json --formula "$REPO/$formula" > livecheck.json
+            sta=$(jq -r '.[0]?.status' livecheck.json)
+            if [ "$sta" = "error" ]; then
+              jq -r '.[0]?.messages | join("\n")' livecheck.json
+              continue
+            fi
+
             outdated=$(jq -r '.[0]?.version.outdated // false' livecheck.json)
 
             if [ "$outdated" = "true" ]; then
@@ -36,18 +43,12 @@ jobs:
 
               if echo "$version" | grep -qE '^\d\d\.\d\d\.\d\d-[a-f0-9]{8}$'; then
                 commit=$(echo "$version" | cut -d- -f2)
-                brew bump-formula-pr \
-                  --no-audit \
-                  --no-fork \
-                  --version="$version" \
-                  --revision="$commit" \
-                  "$formula"
-              else
-                brew bump-formula-pr \
-                  --no-audit \
-                  --no-fork \
-                  --version="$version" \
-                  "$formula"
+                sed -i '' "s/revision: \".*\"/revision: \"$commit\"/" "$f"
               fi
+              brew bump-formula-pr \
+              --no-audit \
+              --no-fork \
+              --version="$version" \
+              "$REPO/$formula"
             fi
           done

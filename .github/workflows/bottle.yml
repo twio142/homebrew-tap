@@ -41,7 +41,7 @@ jobs:
           fi
 
           brew tap "${REPO}"
-          VERSION=$(brew info --json --formula "$FORMULA" | jq -r '.[0].versions.stable')
+          VERSION=$(brew info --json --formula "$REPO/$FORMULA" | jq -r '.[0].versions.stable')
           ROOT_URL="https://github.com/$REPO/releases/download/$FORMULA-v$VERSION"
           {
             echo "formula=$FORMULA"
@@ -64,13 +64,14 @@ jobs:
         id: build
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
           FORMULA: ${{ needs.prep.outputs.formula }}
           ROOT_URL: ${{ needs.prep.outputs.root_url }}
         run: |
           set -euo pipefail
 
-          brew test-bot "$FORMULA"
-          brew bottle --json --root-url="$ROOT_URL" "$FORMULA"
+          brew test-bot "$REPO/$FORMULA"
+          brew bottle --json --root-url="$ROOT_URL" "$REPO/$FORMULA"
 
           TARBALL=$(ls -- *.bottle*.tar.gz)
           JSON_FILE=$(ls -- *.bottle.json)
