@@ -3,13 +3,13 @@ name: Build bottles
 on:
   pull_request:
     branches:
-      - "bump-*"
+      - main
     paths:
       - "Formula/**.rb"
   workflow_dispatch:
     inputs:
       formula:
-        description: "Formula to build bottle for"
+        description: Formula to build bottle for
         required: false
 
 env:
