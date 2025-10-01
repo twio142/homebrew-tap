@@ -1,7 +1,7 @@
 name: Build bottles
 
 on:
-  push:
+  pull_request:
     branches:
       - "bump-*"
     paths:
@@ -38,6 +38,10 @@ jobs:
           if [ -n "${{ github.event.inputs.formula }}" ]; then
             FORMULA="${{ github.event.inputs.formula }}"
             FORMULA_FILE="Formula/${FORMULA}.rb"
+            if [ ! -f "$FORMULA_FILE" ]; then
+              echo "::error::Formula file $FORMULA_FILE does not exist."
+              exit 1
+            fi
           else
             FORMULA_FILE=$(git diff --name-only origin/main...HEAD | grep "Formula/.*\\.rb" | head -n1)
             if [ -z "$FORMULA_FILE" ]; then
