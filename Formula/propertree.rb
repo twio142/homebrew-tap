@@ -3,8 +3,8 @@ class Propertree < Formula
   homepage "https://github.com/corpnewt/ProperTree"
   url "https://github.com/corpnewt/ProperTree.git",
     using:    :git,
-    revision: "417837adc32a9e0ffa4895074889ebf4f52e6c80"
-  version "25.08.31-417837ad"
+    revision: "7cd845d9d133bca9e16fd9734d33efa8fc5eb8d9"
+  version "25.09.28-7cd845d9"
   license "BSD-3-Clause"
 
   livecheck do
@@ -23,6 +23,11 @@ class Propertree < Formula
     regex(/\d{2}\.\d{2}\.\d{2}-[0-9a-f]{8}/i)
   end
 
+  bottle do
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.09.28-7cd845d9"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "a70df6d44c8efb151638727c51f6c916f5cf3fc98fd7d1dd12891818209580ad"
+  end
+
   depends_on "python-tk@3.13"
   depends_on "python@3.13"
 
@@ -36,15 +41,7 @@ class Propertree < Formula
     prefix.install libexec/"ProperTree.app"
 
     bin.install_symlink prefix/"ProperTree.app/Contents/MacOS/ProperTree.command" => "propertree"
-  end
-
-  def caveats
-    <<~EOS
-      ProperTree.app is installed to:
-        #{opt_prefix}/ProperTree.app
-      To make it available in your /Applications folder, you can run:
-        ln -s #{opt_prefix}/ProperTree.app /Applications/
-    EOS
+    ln_sf opt_prefix/"ProperTree.app", "/Applications"
   end
 
   test do
