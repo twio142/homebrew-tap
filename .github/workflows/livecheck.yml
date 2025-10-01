@@ -44,6 +44,12 @@ jobs:
               version=$(jq -r '.[0].version.latest' livecheck.json)
               echo "Formula $formula is outdated. Latest version: $version"
 
+              branch="bump-$formula-$version"
+              if git ls-remote --exit-code --heads origin "$branch"; then
+                echo "Branch $branch already exists on remote. Skipping."
+                continue
+              fi
+
               brew info --json --formula "$REPO/$formula" > info.json
               using_git=$(jq -r '.[0].urls.stable.using == "git"' info.json)
 
@@ -67,13 +73,14 @@ jobs:
               REPO_DIR=$(brew --repo "$REPO")
               cp -f "$REPO_DIR"/Formula/"$formula".rb Formula/
 
-              git config user.name "autobump"
+              git config user.name "${{ github.actor }}"
               git config user.email "autobump@bot"
-              git checkout -b "bump-$formula-$version"
+              git checkout -b "$branch"
               git commit -am "$formula $version"
 
-              git push --set-upstream origin "bump-$formula-$version"
+              git push --set-upstream origin "$branch"
 
               gh pr create --title "$formula $version" --body "Bumps $formula to $version"
+              gh pr merge --auto --squash --delete-branch
             fi
           done

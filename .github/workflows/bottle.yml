@@ -17,6 +17,7 @@ env:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   prep:
@@ -124,8 +125,8 @@ jobs:
           set -euo pipefail
 
           if [ -z "$(ls bottles/*.tar.gz 2>/dev/null)" ]; then
-            echo "No bottles were built, exiting."
-            exit 0
+            echo "::error::No bottles were built."
+            exit 1
           fi
 
           TAG="$FORMULA-v$VERSION"
@@ -139,10 +140,12 @@ jobs:
           brew bottle --merge --write --no-commit --root-url="$ROOT_URL" bottles/*.bottle.json
           cp -f "$(brew --repo "$REPO")/Formula/$FORMULA.rb" Formula/
 
-          echo commit=1 >> "$GITHUB_OUTPUT"
+          if [ -z "$(git status --porcelain Formula/"$FORMULA".rb)" ]; then
+            echo "::error::Formula file not updated after bottling."
+            exit 1
+          fi
 
       - name: Commit changes
-        if: steps.release.outputs.commit == '1'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
