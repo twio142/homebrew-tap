@@ -32,7 +32,7 @@ class Battery < Formula
     end
 
     inreplace "battery.sh" do |s|
-      s.gsub! "binfolder=/usr/local/bin", "binfolder=#{bin}"
+      s.gsub! "binfolder=/usr/local/bin", "binfolder=#{opt_bin}"
       s.gsub! "configfolder=$HOME/.battery", "configfolder=$HOME/.config/battery"
     end
 
