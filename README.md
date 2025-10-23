@@ -14,4 +14,4 @@ See each package’s license field and the upstream tarball for license details.
 - [`rime-ls`](https://github.com/wlh320/rime-ls)
 - [`ttyd`](https://github.com/tsl0922/ttyd), with my patch to change some styles and add nerd font
 - [`ttyper`](https://github.com/max-niederman/ttyper)
-
+- [`reddittui`](https://github.com/tonymajestro/reddit-tui)
