@@ -25,6 +25,7 @@ jobs:
     outputs:
       formula: ${{ steps.get-info.outputs.formula }}
       version: ${{ steps.get-info.outputs.version }}
+      branch: ${{ steps.get-info.outputs.branch }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,6 +34,7 @@ jobs:
       - id: get-info
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
         run: |
           set -euo pipefail
 
@@ -58,9 +60,16 @@ jobs:
           cp -f "$FORMULA_FILE" "$(brew --repo "$REPO")/Formula"
 
           VERSION=$(brew info --json --formula "$REPO/$FORMULA" | jq -r '.[0].versions.stable')
+
+          # If running on main branch, create a new one to bypass branch protection rules
+          if [ "$BRANCH" == "main" ]; then
+            BRANCH="bump-${FORMULA}-${VERSION}-$(date +%s)"
+          fi
+
           {
             echo "formula=$FORMULA"
             echo "version=$VERSION"
+            echo "branch=$BRANCH"
           } >> "$GITHUB_OUTPUT"
 
   test-bot:
@@ -150,4 +159,4 @@ jobs:
         with:
           commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
           file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
-          branch: ${{ github.head_ref }}
+          branch: ${{ needs.prep.outputs.branch }}
