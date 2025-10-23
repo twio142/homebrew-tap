@@ -145,9 +145,36 @@ jobs:
             exit 1
           fi
 
+      - name: Commit and open PR (no direct push to protected main)
+        if: github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORMULA: ${{ needs.prep.outputs.formula }}
+          VERSION: ${{ needs.prep.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "${{ github.actor }}"
+          git config user.email "actions@github.com"
+
+          BRANCH="bump-${FORMULA}-${VERSION}-$(date +%s)"
+          git checkout -b "$BRANCH"
+
+          git add "Formula/${FORMULA}.rb"
+          if git diff --staged --quiet; then
+            echo "No changes to commit for ${FORMULA}. Skipping push/PR."
+            exit 0
+          fi
+          git commit -m "${FORMULA} ${VERSION} bottle block [skip ci]"
+
+          git push --set-upstream origin "$BRANCH"
+          gh pr create --title "${FORMULA} ${VERSION} bottle block" --body "Automated bottling changes for ${FORMULA} ${VERSION}" --base main --head "$BRANCH"
+          gh pr merge --auto --squash --delete-branch
+
       - name: Commit changes
+        if: github.ref_name != 'main'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
           file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
-          branch: ${{ github.head_ref }}
+          branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
