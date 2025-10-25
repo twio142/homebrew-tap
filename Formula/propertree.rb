@@ -3,8 +3,8 @@ class Propertree < Formula
   homepage "https://github.com/corpnewt/ProperTree"
   url "https://github.com/corpnewt/ProperTree.git",
     using:    :git,
-    revision: "a9a4108768338ad20c2fc1a1fe2422aff463017f"
-  version "25.10.24-a9a41087"
+    revision: "7cd845d9d133bca9e16fd9734d33efa8fc5eb8d9"
+  version "25.09.28-7cd845d9"
   license "BSD-3-Clause"
 
   livecheck do
@@ -24,8 +24,8 @@ class Propertree < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.09.28-7cd845d9"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "a70df6d44c8efb151638727c51f6c916f5cf3fc98fd7d1dd12891818209580ad"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.10.24-a9a41087"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "8b0b364d0cb67efb94ce6107253da45a30ea93976c5458102d6863d86f5f765e"
   end
 
   depends_on "python-tk@3.13"
@@ -34,20 +34,14 @@ class Propertree < Formula
   def install
     libexec.install Dir["*"]
 
-    python_executable = Formula["python@3.13"].opt_bin/"python3.13"
+    python_executable = Formula["python@3.13"].opt_bin/"python3"
 
     system python_executable, libexec/"Scripts/buildapp-select.py", "-p", python_executable
 
     prefix.install libexec/"ProperTree.app"
 
     bin.install_symlink prefix/"ProperTree.app/Contents/MacOS/ProperTree.command" => "propertree"
-    begin
-      ln_sf opt_prefix/"ProperTree.app", "/Applications"
-    rescue
-      opoo "Could not create symlink to /Applications. You can manually create it with:"
-      puts "  ln -s #{opt_prefix}/ProperTree.app /Applications/"
-      puts "Or create a symlink to any other location of your choice."
-    end
+    ln_sf opt_prefix/"ProperTree.app", "/Applications"
   end
 
   test do
