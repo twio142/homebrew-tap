@@ -41,7 +41,13 @@ class Propertree < Formula
     prefix.install libexec/"ProperTree.app"
 
     bin.install_symlink prefix/"ProperTree.app/Contents/MacOS/ProperTree.command" => "propertree"
-    ln_sf opt_prefix/"ProperTree.app", "/Applications"
+    begin
+      ln_sf opt_prefix/"ProperTree.app", "/Applications"
+    rescue
+      opoo "Could not create symlink to /Applications. You can manually create it with:"
+      puts "  ln -s #{opt_prefix}/ProperTree.app /Applications/"
+      puts "Or create a symlink to any other location of your choice."
+    end
   end
 
   test do
