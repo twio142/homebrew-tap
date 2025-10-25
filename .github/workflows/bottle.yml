@@ -18,6 +18,7 @@ env:
 permissions:
   contents: write
   pull-requests: write
+  checks: write
 
 jobs:
   prep:
@@ -160,3 +161,26 @@ jobs:
           commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
           file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
           branch: ${{ needs.prep.outputs.branch }}
+
+      - name: Create "release" check run for the pushed commit
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = '${{ needs.prep.outputs.branch }}';
+            const sha = require('child_process')
+              .execFileSync('git', ['fetch', 'origin', `refs/heads/${branch}:refs/remotes/origin/${branch}`], { encoding: 'utf-8' })
+              .trim();
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'release',
+              head_sha: sha,
+              status: 'completed',
+              conclusion: 'success',
+              output: {
+                title: 'release',
+                summary: 'Release workflow completed and produced the release commit'
+              }
+            });
