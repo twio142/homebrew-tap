@@ -25,62 +25,57 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+          brew update &> /dev/null
           brew tap "$REPO"
 
-          for f in Formula/*.rb; do
-            formula=$(basename "$f" .rb)
-            echo "Checking $formula"
+          brew livecheck --tap "$REPO" --json --newer-only > livecheck.json
 
-            brew livecheck --json --formula "$REPO/$formula" > livecheck.json
-            sta=$(jq -r '.[0]?.status' livecheck.json)
-            if [ "$sta" = "error" ]; then
-              jq -r '.[0]?.messages | join("\n")' livecheck.json
+          _status=$(jq -r '.[0]?.status' livecheck.json 2>/dev/null || echo "error")
+          if [ "$_status" = "error" ]; then
+            jq -r '.[0]?.messages | join("\n")' livecheck.json 2>/dev/null || cat livecheck.json
+            exit 1
+          fi
+
+          jq -r '.[] | "\(.formula) \(.version.latest)"' livecheck.json | while read -r line; do
+            read -r formula version <<< "$line"
+            echo "Formula $formula is outdated. Latest version: $version"
+
+            branch="bump-$formula-$version"
+            if git ls-remote --exit-code --heads origin "$branch"; then
+              echo "Branch $branch already exists on remote. Skipping."
               continue
             fi
 
-            outdated=$(jq -r '.[0]?.version.outdated // false' livecheck.json)
+            brew info --json --formula "$REPO/$formula" > info.json
+            using_git=$(jq -r '.[0].urls.stable.using == "git"' info.json)
 
-            if [ "$outdated" = "true" ]; then
-              version=$(jq -r '.[0].version.latest' livecheck.json)
-              echo "Formula $formula is outdated. Latest version: $version"
-
-              branch="bump-$formula-$version"
-              if git ls-remote --exit-code --heads origin "$branch"; then
-                echo "Branch $branch already exists on remote. Skipping."
-                continue
-              fi
-
-              brew info --json --formula "$REPO/$formula" > info.json
-              using_git=$(jq -r '.[0].urls.stable.using == "git"' info.json)
-
-              if [ "$using_git" = "true" ]; then
-                url=$(jq -r '.[0].urls.stable.url' info.json)
-                revision=$(git ls-remote "$url" HEAD | awk '{print $1}')
-                brew bump-formula-pr \
-                  --no-audit \
-                  --write-only \
-                  --version="$version" \
-                  --revision="$revision" \
-                  "$REPO/$formula"
-              else
-                brew bump-formula-pr \
-                  --no-audit \
-                  --write-only \
-                  --version="$version" \
-                  "$REPO/$formula"
-              fi
-
-              REPO_DIR=$(brew --repo "$REPO")
-              cp -f "$REPO_DIR"/Formula/"$formula".rb Formula/
-
-              git config user.name "${{ github.actor }}"
-              git config user.email "autobump@bot"
-              git checkout -b "$branch"
-              git commit -am "$formula $version"
-
-              git push --set-upstream origin "$branch"
-
-              gh pr create --title "$formula $version" --body "Bumps $formula to $version"
-              gh pr merge --auto --squash --delete-branch
+            if [ "$using_git" = "true" ]; then
+              url=$(jq -r '.[0].urls.stable.url' info.json)
+              revision=$(git ls-remote "$url" HEAD | awk '{print $1}')
+              brew bump-formula-pr \
+                --no-audit \
+                --write-only \
+                --version="$version" \
+                --revision="$revision" \
+                "$REPO/$formula"
+            else
+              brew bump-formula-pr \
+                --no-audit \
+                --write-only \
+                --version="$version" \
+                "$REPO/$formula"
             fi
+
+            REPO_DIR=$(brew --repo "$REPO")
+            cp -f "$REPO_DIR"/Formula/"$formula".rb Formula/
+
+            git config user.name "${{ github.actor }}"
+            git config user.email "autobump@bot"
+            git checkout -b "$branch"
+            git commit -am "$formula $version"
+
+            git push --set-upstream origin "$branch"
+
+            gh pr create --title "$formula $version" --body "Bumps $formula to $version"
+            gh pr merge --auto --squash --delete-branch
           done
