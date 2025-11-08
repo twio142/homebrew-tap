@@ -3,8 +3,8 @@ class Propertree < Formula
   homepage "https://github.com/corpnewt/ProperTree"
   url "https://github.com/corpnewt/ProperTree.git",
     using:    :git,
-    revision: "1bbe4db76656438e797db212124306737dcafc80"
-  version "25.11.07-1bbe4db7"
+    revision: "a9a4108768338ad20c2fc1a1fe2422aff463017f"
+  version "25.10.24-a9a41087"
   license "BSD-3-Clause"
 
   livecheck do
@@ -24,8 +24,8 @@ class Propertree < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.10.24-a9a41087"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "8b0b364d0cb67efb94ce6107253da45a30ea93976c5458102d6863d86f5f765e"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v25.11.07-1bbe4db7"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "d98195761cd04a16290910207f26070a732a2d98159da8bda3212d9b458bae7b"
   end
 
   depends_on "python-tk@3.13"
