@@ -146,6 +146,7 @@ jobs:
           gh release upload "$TAG" bottles/*.tar.gz --clobber
 
           brew tap "$REPO"
+          cp -f "Formula/$FORMULA.rb" "$(brew --repo "$REPO")/Formula/"
           ROOT_URL="https://github.com/$REPO/releases/download/$FORMULA-v$VERSION"
           brew bottle --merge --write --no-commit --root-url="$ROOT_URL" bottles/*.bottle.json
           cp -f "$(brew --repo "$REPO")/Formula/$FORMULA.rb" Formula/
