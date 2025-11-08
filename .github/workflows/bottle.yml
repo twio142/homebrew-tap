@@ -168,15 +168,16 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const branch = '${{ needs.prep.outputs.branch }}';
-            const sha = require('child_process')
-              .execFileSync('git', ['fetch', 'origin', `refs/heads/${branch}:refs/remotes/origin/${branch}`], { encoding: 'utf-8' })
-              .trim();
+            const { execFileSync } = require('child_process');
+
+            execFileSync('git', ['fetch', 'origin', `refs/heads/${branch}:refs/remotes/origin/${branch}`]);
+            const head_sha = execFileSync('git', ['rev-parse', `origin/${branch}`], { encoding: 'utf-8' }).trim();
 
             await github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               name: 'release',
-              head_sha: sha,
+              head_sha,
               status: 'completed',
               conclusion: 'success',
               output: {
