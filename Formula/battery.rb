@@ -1,8 +1,8 @@
 class Battery < Formula
   desc "CLI tool for managing battery charging"
   homepage "https://github.com/actuallymentor/battery"
-  url "https://github.com/actuallymentor/battery/archive/refs/tags/v1.2.3.tar.gz"
-  sha256 "f7cd3ea3cbc5570ed26ba416ac8f5d1e42ad2399c3fe0526b87c736955761351"
+  url "https://github.com/actuallymentor/battery/archive/refs/tags/v1.3.1.tar.gz"
+  sha256 "67fedb7da88e5d59994ae617643029145a26ab36ccb45af2fc3b0588ee33403e"
   license "MIT"
 
   livecheck do
