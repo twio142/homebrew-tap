@@ -11,8 +11,8 @@ class Battery < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/battery-v1.3.1"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "fc75e8e91a91d1a036874aed747b3a78c22bba2a01f9be89b6d23d4d737be79c"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/battery-v1.3.2"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "2b27ea88ab7c35c758fff0469b09dc722e412c113a0e28dd3e5b317fd8c867ad"
   end
 
   depends_on "make" => :build
