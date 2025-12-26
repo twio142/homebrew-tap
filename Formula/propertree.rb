@@ -3,8 +3,8 @@ class Propertree < Formula
   homepage "https://github.com/corpnewt/ProperTree"
   url "https://github.com/corpnewt/ProperTree.git",
     using:    :git,
-    revision: "ba3858bc57e8895a728f36266b28c1fcc6d2e134"
-  version "25.12.13-ba3858bc"
+    revision: "ed0c7742381201f737ecfcc508028ee58f9374f0"
+  version "25.12.25-ed0c7742"
   license "BSD-3-Clause"
 
   livecheck do
