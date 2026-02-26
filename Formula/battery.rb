@@ -1,8 +1,8 @@
 class Battery < Formula
   desc "CLI tool for managing battery charging"
   homepage "https://github.com/actuallymentor/battery"
-  url "https://github.com/actuallymentor/battery/archive/refs/tags/v1.3.2.tar.gz"
-  sha256 "1b10b42f6b010d99c9e4d46846ee79f113367bb49b940b43f10312273cdbbdcb"
+  url "https://github.com/actuallymentor/battery/archive/refs/tags/v1.4.0.tar.gz"
+  sha256 "37ffc32d647a5ec20af2ddabb04eba748bc2b29b12e469ccefdd182db72dce7a"
   license "MIT"
 
   livecheck do
@@ -11,8 +11,8 @@ class Battery < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/battery-v1.3.2"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "b0d1e73a87ba561ce32e34aedeabfcbd9d0ca09023ee22c8bac6a44c47a43598"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/battery-v1.4.0"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "2984cfe5eeb94ab6641e3df6f456d04f698a5b295501f2f707184577e8eb98c9"
   end
 
   depends_on "make" => :build
