@@ -15,3 +15,4 @@ See each package’s license field and the upstream tarball for license details.
 - [`ttyd`](https://github.com/tsl0922/ttyd), with my patch to change some styles and add nerd font
 - [`ttyper`](https://github.com/max-niederman/ttyper)
 - [`reddittui`](https://github.com/tonymajestro/reddit-tui)
+- [`systemctl-tui`](https://github.com/rgwood/systemctl-tui)
