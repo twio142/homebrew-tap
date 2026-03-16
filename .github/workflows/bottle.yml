@@ -27,6 +27,7 @@ jobs:
       formula: ${{ steps.get-info.outputs.formula }}
       version: ${{ steps.get-info.outputs.version }}
       branch: ${{ steps.get-info.outputs.branch }}
+      new_branch: ${{ steps.get-info.outputs.new_branch }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,14 +64,17 @@ jobs:
           VERSION=$(brew info --json --formula "$REPO/$FORMULA" | jq -r '.[0].versions.stable')
 
           # If running on main branch, create a new one to bypass branch protection rules
+          NEW_BRANCH=false
           if [ "$BRANCH" == "main" ]; then
             BRANCH="bump-${FORMULA}-${VERSION}-$(date +%s)"
+            NEW_BRANCH=true
           fi
 
           {
             echo "formula=$FORMULA"
             echo "version=$VERSION"
             echo "branch=$BRANCH"
+            echo "new_branch=$NEW_BRANCH"
           } >> "$GITHUB_OUTPUT"
 
   test-bot:
@@ -162,7 +166,7 @@ jobs:
           commit_message: "${{ needs.prep.outputs.formula }} ${{ needs.prep.outputs.version }} bottle block [skip ci]"
           file_pattern: "Formula/${{ needs.prep.outputs.formula }}.rb"
           branch: ${{ needs.prep.outputs.branch }}
-          create_branch: ${{ github.event_name != 'pull_request' }}
+          create_branch: ${{ needs.prep.outputs.new_branch }}
 
       - name: Create "release" check run for the pushed commit
         uses: actions/github-script@v7
