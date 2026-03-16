@@ -1,8 +1,8 @@
 class GoPinyin < Formula
   desc "Go library for converting Chinese hanzi to pinyin"
   homepage "https://github.com/twio142/go-pinyin"
-  url "https://github.com/twio142/go-pinyin/archive/refs/tags/v0.1.1.tar.gz"
-  sha256 "e7fca4a5537230f30b448feb648edee3b0eab214a9d6f0a0c977b953370ee17f"
+  url "https://github.com/twio142/go-pinyin/archive/refs/tags/v0.1.2.tar.gz"
+  sha256 "ee074a8b33a56ca93517997f62f19133e08777163f38ef0e23cf3162257ef44e"
 
   livecheck do
     url :homepage
