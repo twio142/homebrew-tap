@@ -1,8 +1,8 @@
 class SystemctlTui < Formula
   desc "Fast, simple TUI for interacting with systemd services and their logs"
   homepage "https://github.com/rgwood/systemctl-tui"
-  url "https://github.com/rgwood/systemctl-tui/archive/refs/tags/v0.5.1.tar.gz"
-  sha256 "243c8eb7b470db326181253ca8e354448ed02ded961e0b6d0edd657302ef680d"
+  url "https://github.com/rgwood/systemctl-tui/archive/refs/tags/v0.5.2.tar.gz"
+  sha256 "1c77ba06ece0866c6680eb52c2842d65ed688e273d9eb2e310106cdfa841d701"
   license "MIT"
 
   livecheck do
@@ -11,9 +11,8 @@ class SystemctlTui < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/systemctl-tui-v0.5.1"
-    rebuild 1
-    sha256 cellar: :any_skip_relocation, x86_64_linux: "94962ad7f50878aedc8e386fdbea78b901063fa20b5de4baf7bb1c58e678d821"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/systemctl-tui-v0.5.2"
+    sha256 cellar: :any_skip_relocation, x86_64_linux: "864dbf710a8854507cefe0274f3962f1f7f57749c8c2ffe64af93601d6f9444f"
   end
 
   depends_on "rust" => :build
