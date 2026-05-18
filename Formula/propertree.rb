@@ -24,8 +24,8 @@ class Propertree < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v26.05.10-a10a7f17"
-    sha256 cellar: :any_skip_relocation, arm64_sequoia: "175fa1d94d1491dc3c7790fc3539532f203327373b11521653b03494878d40ab"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/propertree-v26.05.17-956c3df6"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "10ba74aec2140a7791800f19d617646a1b57f41106514381ef7471b49c66e278"
   end
 
   depends_on "python-tk@3.13"
