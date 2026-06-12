@@ -59,6 +59,7 @@ jobs:
           echo "Formula to build: $FORMULA"
 
           brew tap "${REPO}"
+          brew trust "${REPO}"
           cp -f "$FORMULA_FILE" "$(brew --repo "$REPO")/Formula"
 
           VERSION=$(brew info --json --formula "$REPO/$FORMULA" | jq -r '.[0].versions.stable')

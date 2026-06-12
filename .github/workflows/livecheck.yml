@@ -27,6 +27,7 @@ jobs:
           set -euo pipefail
           brew update &> /dev/null
           brew tap "$REPO"
+          brew trust "$REPO"
 
           brew livecheck --tap "$REPO" --json --newer-only > livecheck.json
 
