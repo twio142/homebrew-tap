@@ -34,7 +34,7 @@ class Propertree < Formula
   def install
     libexec.install Dir["*"]
 
-    python_executable = Formula["python@3.13"].opt_bin/"python3.13"
+    python_executable = formula_opt_bin("python@3.13")/"python3.13"
 
     system python_executable, libexec/"Scripts/buildapp-select.py", "-p", python_executable
 

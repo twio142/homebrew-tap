@@ -52,7 +52,7 @@ class Ttyd < Formula
     end
 
     cd "html" do
-      ENV.prepend_path "PATH", Formula["node"].opt_bin
+      ENV.prepend_path "PATH", formula_opt_bin("node")
       system "corepack", "use", "yarn@3.6.3"
       system "corepack", "yarn", "install"
       system "corepack", "yarn", "run", "build"

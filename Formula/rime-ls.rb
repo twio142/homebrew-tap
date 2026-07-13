@@ -21,8 +21,8 @@ class RimeLs < Formula
   depends_on "librime"
 
   def install
-    ENV["LIBRIME_INCLUDE_DIR"] = Formula["librime"].opt_include
-    ENV["LIBRIME_LIB_DIR"] = Formula["librime"].opt_lib
+    ENV["LIBRIME_INCLUDE_DIR"] = formula_opt_include("librime")
+    ENV["LIBRIME_LIB_DIR"] = formula_opt_lib("librime")
 
     system "cargo", "install", *std_cargo_args
   end
