@@ -11,8 +11,8 @@ class SystemctlTui < Formula
   end
 
   bottle do
-    root_url "https://github.com/twio142/homebrew-tap/releases/download/systemctl-tui-v0.6.0"
-    sha256 cellar: :any, x86_64_linux: "ef05a813b6a8bb5b794967939d4a0b2536c6d0827f1d3d04bb56147b8dc581d2"
+    root_url "https://github.com/twio142/homebrew-tap/releases/download/systemctl-tui-v0.6.1"
+    sha256 cellar: :any, x86_64_linux: "d5b7e95443021edaaf97c32ae6108eb86acddc79bd1aa10917f6f2d31f9eba5d"
   end
 
   depends_on "rust" => :build
