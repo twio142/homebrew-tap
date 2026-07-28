@@ -1,8 +1,8 @@
 class SystemctlTui < Formula
   desc "Fast, simple TUI for interacting with systemd services and their logs"
   homepage "https://github.com/rgwood/systemctl-tui"
-  url "https://github.com/rgwood/systemctl-tui/archive/refs/tags/v0.7.0.tar.gz"
-  sha256 "7ce318bb5f9fa4fc4b266557d1476bd8ed058faa15807a579090bd93e994ab23"
+  url "https://github.com/rgwood/systemctl-tui/archive/refs/tags/v0.8.0.tar.gz"
+  sha256 "004e160f4f59f824ac35baf23fbc615b9f12bdb4f5eee122017bfe24a6ec02d9"
   license "MIT"
 
   livecheck do
