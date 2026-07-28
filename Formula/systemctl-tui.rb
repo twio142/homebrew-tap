@@ -19,7 +19,7 @@ class SystemctlTui < Formula
   depends_on :linux
 
   def install
-    system "cargo", "install", *std_cargo_args
+    system "cargo", "install", *std_cargo_args(path: "crates/systemctl-tui")
   end
 
   test do
